@@ -1,0 +1,8 @@
+# 仓库内行尾统一为 LF；防止 Windows 贡献者引入 CRLF 噪声
+* text=auto eol=lf
+
+# 二进制资源不做行尾/编码转换
+*.png binary
+*.ico binary
+*.wasm binary
+*.zip binary

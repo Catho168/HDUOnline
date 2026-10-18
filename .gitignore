@@ -1,0 +1,41 @@
+# ─── 依赖与构建产物（可再生）───────────────────────────────
+node_modules/
+.output/
+.wxt/
+stats.html
+*.log
+
+# 生成物：由 postinstall/postbuild 再生（scripts/copy-wasm.mjs / scripts/make-icons.mjs）
+public/wasm/
+public/icon/
+
+# ─── 本地工具产物 ───────────────────────────────────────────
+.mimosa/
+_reference/
+
+# ─── 本地调试产物（不得入库：可能含凭据/直链）────────────────
+tests/.local/
+*.local.json
+tests/fixtures/*.mp4
+
+# ─── 防呆：环境变量与密钥 ───────────────────────────────────
+.env
+.env.*
+*.pem
+
+# ─── 编辑器 / 系统文件 ──────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# ─── 其他 ──────────────────────────────────────────────────
+coverage/
+*.tsbuildinfo
+
+# 根目录设计文档（含站点内部细节与实测数据，不随代码发布）
+技术实现文档_*.md
+智慧课堂站点技术调研报告_*.md
+docs/实现差异说明.md
+docs/验收报告模板.md

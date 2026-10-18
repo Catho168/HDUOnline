@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>智慧课堂播放页模拟器 · player-sim（旧形态）</title>
+    <style>
+      /* 复刻站点旧版播放页（#/video-detail）关键结构与类名，仅供本地 E2E/单测，不含任何站点私有资源 */
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f5f6f8; color: #1f2329; }
+      .play-header { display: flex; align-items: center; gap: 16px; padding: 12px 20px; background: #fff; border-bottom: 1px solid #e3e5e9; }
+      .play-header .title { font-weight: 700; }
+      .play-header .meta { color: #646a73; font-size: 13px; }
+      .caption-release-status { font-size: 12px; color: #8f959e; }
+      .layout { display: flex; gap: 16px; padding: 16px 20px; align-items: flex-start; }
+      .play-video { flex: 1; min-width: 0; }
+      .play-video-main-container { background: #000; border-radius: 10px; overflow: hidden; }
+      .left-module-wrapper { position: relative; }
+      .player-wrapper { position: relative; }
+      .player-wrapper video { width: 100%; display: block; background: #000; aspect-ratio: 16 / 9; }
+      .second-player-container { display: flex; gap: 10px; margin-top: 10px; }
+      .second-player-container video { width: 33%; border-radius: 8px; background: #111; aspect-ratio: 16 / 9; }
+      .player-caption { position: absolute; left: 50%; transform: translateX(-50%); bottom: 90px; color: #fff; background: rgba(0,0,0,.6); padding: 6px 12px; border-radius: 6px; font-size: 16px; display: none; }
+      /* 站点进度条容器（插件的时间轴标记层按它的矩形对位） */
+      .kmd-control-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #16181d; }
+      .jy-control-progress { flex: 1; height: 8px; background: #3a3f47; border-radius: 4px; position: relative; cursor: pointer; }
+      .jy-control-progress > .buffered { position: absolute; inset: 0 auto 0 0; width: 0; background: #565d68; border-radius: 4px; }
+      .jy-control-progress > .played { position: absolute; inset: 0 auto 0 0; width: 0; background: #2b6cff; border-radius: 4px; }
+      .kmd-btn { background: transparent; border: 1px solid #3a3f47; color: #e8eaed; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 13px; }
+      .right-body { width: 340px; background: #fff; border: 1px solid #e3e5e9; border-radius: 10px; }
+      .tab-nav-content { display: flex; border-bottom: 1px solid #e3e5e9; }
+      .tab-nav-content > .content-item { padding: 10px 14px; cursor: pointer; font-size: 13px; color: #646a73; }
+      .tab-nav-content > .content-item.active { color: #2b6cff; border-bottom: 2px solid #2b6cff; }
+      .body-content { max-height: 420px; overflow: auto; padding: 8px 0; }
+      .body-item { padding: 8px 14px; cursor: pointer; font-size: 13px; }
+      .body-item:hover { background: #f5f6f8; }
+      .body-item.active { background: rgba(43,108,255,.1); }
+      .body-container-time { color: #646a73; font-size: 12px; }
+      .ai-caption-wrapper { padding: 12px 14px; color: #8f959e; font-size: 13px; border-top: 1px solid #e3e5e9; }
+      .teacher-note-list { padding: 12px 14px; color: #8f959e; font-size: 13px; border-top: 1px solid #e3e5e9; }
+      .hint { max-width: 980px; margin: 12px auto 40px; padding: 12px 16px; background: #fff; border: 1px solid #e3e5e9; border-radius: 10px; font-size: 13px; color: #646a73; }
+      code { background: #f5f6f8; padding: 1px 4px; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <!--
+      player-sim.html —— 站点旧版播放页（#/video-detail）模拟器（技术文档 §8.2 硬性交付物）
+
+      用途：在**不需要真实账号凭据**的前提下验证插件的注入、寻址、截图、统计口径等行为。
+      用法：
+        1) 推荐：`node tests/fixtures/serve.mjs` 启动本地服务（同时提供模拟站点接口），
+           然后打开 http://127.0.0.1:8788/player-sim.html#/video-detail?teclId=9001&courseId=1227038
+        2) 直接双击打开本文件：插件面板仍会注入（接口失败时自动降级为 DOM/播放器兜底信息）。
+
+      注意：本文件不含任何真实课程数据与凭据；接口数据见 serve.mjs 中的 MOCK（占位值）。
+    -->
+    <div class="play-header">
+      <span class="title" id="course-title">线性代数（模拟课程）</span>
+      <span class="meta">教师：模拟教师 · 第5周 / 2026-10-12 / 第12节课</span>
+      <span class="meta">共 <span id="play-count">3</span> 次播放</span>
+      <span class="caption-release-status">字幕发布状态：无</span>
+    </div>
+
+    <div class="layout">
+      <div class="play-video">
+        <div class="play-video-main-container">
+          <div class="left-module-wrapper">
+            <div class="player-wrapper">
+              <!-- 主画面（选择器 .play-video .left-module-wrapper .player-wrapper video） -->
+              <video id="v1" controls playsinline preload="metadata" src="sample.mp4?view=1"></video>
+              <div class="player-caption"></div>
+            </div>
+          </div>
+          <div class="kmd-control-bar">
+            <button class="kmd-btn" id="btn-toggle" type="button">播放/暂停</button>
+            <button class="kmd-btn" id="btn-rate" type="button">倍速 1×</button>
+            <button class="kmd-btn" id="btn-note" type="button">记笔记</button>
+            <div class="jy-control-progress" id="progress">
+              <div class="buffered"></div>
+              <div class="played"></div>
+            </div>
+            <span class="kmd-btn" id="clock" style="border: none">00:00 / 00:00</span>
+          </div>
+        </div>
+        <!-- 副画面（多机位：站点实测 3 路） -->
+        <div class="second-player-container">
+          <video id="v2" muted playsinline preload="metadata" src="sample.mp4?view=2"></video>
+          <video id="v3" muted playsinline preload="metadata" src="sample.mp4?view=3"></video>
+        </div>
+      </div>
+
+      <div class="right-body">
+        <div class="tab-nav-content">
+          <div class="content-item active">目录</div>
+          <div class="content-item">资料及其他</div>
+        </div>
+        <div class="body-content" id="session-list">
+          <div class="body-item">
+            <div>第3周 / 2026-09-28 / 第10节课</div>
+            <div class="body-container-time">2026-09-28 18:00 第3教学楼201</div>
+          </div>
+          <div class="body-item">
+            <div>第4周 / 2026-10-05 / 第11节课</div>
+            <div class="body-container-time">2026-10-05 18:00 第3教学楼201</div>
+          </div>
+          <div class="body-item active">
+            <div>第5周 / 2026-10-12 / 第12节课</div>
+            <div class="body-container-time">2026-10-12 18:00 第3教学楼201</div>
+          </div>
+        </div>
+        <div class="ai-caption-wrapper">暂无字幕 / 回到当前播放位置</div>
+        <div class="teacher-note-list">老师笔记：暂无</div>
+      </div>
+    </div>
+
+    <div class="hint">
+      <p><strong>模拟器说明</strong>：本页复刻站点旧版播放页的关键类名与结构（主/副画面、进度条容器、课次列表、站点字幕与笔记占位），
+      用于在无凭据环境下验证插件行为。</p>
+      <p>若由 <code>serve.mjs</code> 提供服务，页面会显示模拟的课次列表；视频源默认使用
+      <code>sample.mp4</code>（缺失时退化为 canvas 合成画面，仍可验证 seek 与截图）。</p>
+      <p>路由：<code>#/video-detail?teclId=9001&amp;courseId=1227038</code>；切换课次会改变 hash（验证重注入与清理）。</p>
+    </div>
+
+    <script>
+      // 模拟站点的 hash 路由与播放器行为（不依赖任何框架）
+      (function () {
+        const params = new URLSearchParams(location.hash.split('?')[1] || '');
+        const teclId = params.get('teclId') || '9001';
+        const courseId = params.get('courseId') || '1227038';
+        const DURATION = 2820; // 与站点实测的 47 分钟一致（vodTime=2820）
+
+        const v1 = document.getElementById('v1');
+        const played = document.querySelector('.jy-control-progress > .played');
+        const buffered = document.querySelector('.jy-control-progress > .buffered');
+        const clock = document.getElementById('clock');
+        const progress = document.getElementById('progress');
+
+        function fmt(sec) {
+          const total = Math.max(0, Math.floor(sec || 0));
+          const m = Math.floor(total / 60);
+          const s = total % 60;
+          return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        }
+
+        function refresh() {
+          const duration = Number.isFinite(v1.duration) && v1.duration > 0 ? v1.duration : DURATION;
+          const ratio = Math.min(1, (v1.currentTime || 0) / duration);
+          if (played) played.style.width = ratio * 100 + '%';
+          if (buffered) buffered.style.width = Math.min(1, ratio + 0.15) * 100 + '%';
+          if (clock) clock.textContent = fmt(v1.currentTime) + ' / ' + fmt(duration);
+        }
+
+        function fallbackStream(label) {
+          const canvas = document.createElement('canvas');
+          canvas.width = 640;
+          canvas.height = 360;
+          const ctx = canvas.getContext('2d');
+          let frame = 0;
+          const tick = function () {
+            frame += 1;
+            ctx.fillStyle = '#1f2329';
+            ctx.fillRect(0, 0, 640, 360);
+            ctx.fillStyle = '#2b6cff';
+            ctx.fillRect(0, 300 + Math.sin(frame / 30) * 20, 640, 4);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '24px sans-serif';
+            ctx.fillText(label + ' · ' + (v1.currentTime || 0).toFixed(1) + 's', 24, 60);
+            ctx.font = '14px sans-serif';
+            ctx.fillText('player-sim 合成画面（无 sample.mp4）', 24, 90);
+            requestAnimationFrame(tick);
+          };
+          tick();
+          return canvas.captureStream(12);
+        }
+
+        v1.addEventListener('timeupdate', refresh);
+        v1.addEventListener('loadedmetadata', refresh);
+        v1.addEventListener('error', function () {
+          if (!v1.srcObject) v1.srcObject = fallbackStream('教师1');
+        });
+
+        document.getElementById('btn-toggle').addEventListener('click', function () {
+          if (v1.paused) void v1.play();
+          else v1.pause();
+        });
+        document.getElementById('btn-rate').addEventListener('click', function (event) {
+          const rates = [1, 1.25, 1.5, 2, 0.5];
+          const currentIndex = rates.indexOf(v1.playbackRate);
+          v1.playbackRate = rates[(currentIndex + 1) % rates.length];
+          event.target.textContent = '倍速 ' + v1.playbackRate + '×';
+        });
+        document.getElementById('btn-note').addEventListener('click', function () {
+          window.alert('站点原生"记笔记"（模拟）：' + fmt(v1.currentTime));
+        });
+        progress.addEventListener('click', function (event) {
+          const rect = progress.getBoundingClientRect();
+          const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+          const duration = Number.isFinite(v1.duration) && v1.duration > 0 ? v1.duration : DURATION;
+          v1.currentTime = ratio * duration;
+          refresh();
+        });
+
+        document.querySelectorAll('.body-item').forEach(function (item, index) {
+          const ids = ['1227036', '1227037', '1227038'];
+          item.addEventListener('click', function () {
+            location.hash = '#/video-detail?teclId=' + teclId + '&courseId=' + ids[index];
+            location.reload();
+          });
+        });
+
+        // hash 路由变化时也刷新（验证插件的 hashchange 处理）
+        window.addEventListener('hashchange', function () {
+          console.info('[player-sim] hash 变化：', location.hash);
+        });
+        refresh();
+        console.info('[player-sim] 就绪', { teclId: teclId, courseId: courseId, duration: DURATION });
+      })();
+    </script>
+  </body>
+</html>
