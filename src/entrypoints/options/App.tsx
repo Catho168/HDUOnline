@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { callOp } from '@/core/shared/client';
-import { ASR_MODELS, DEFAULT_SETTINGS, PROVIDER_PRESETS, type AsrModelTier } from '@/core/shared/constants';
+import { ASR_MODELS, CLOUD_ASR_PRESETS, DEFAULT_SETTINGS, PROVIDER_PRESETS, type AsrModelTier } from '@/core/shared/constants';
 import { checkUrl, toOriginPattern } from '@/core/shared/urlGuard';
 import { loadSecrets, loadSettings, saveSecrets, saveSettings } from '@/core/shared/settings';
 import { clearLogs, readLogs, type LogEntry } from '@/core/shared/logger';
@@ -131,7 +131,7 @@ export function App() {
           <Button size="small" variant="ghost" icon="chart" onClick={() => chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') })}>
             学习看板
           </Button>
-          <div className="hdu-hint">所有数据只保存在本机</div>
+          <div className="hdu-hint">数据只保存在本机；转写默认在本机进行</div>
         </div>
       </aside>
       <main className="hdu-options-main">
@@ -140,7 +140,7 @@ export function App() {
             <div className="hdu-topbar-title">{NAV.find((n) => n.key === section)?.label}</div>
             <div className="hdu-topbar-sub">
               {section === 'ai' ? '三种请求格式，Key 仅存本机' :
-                section === 'asr' ? '模型档位、转写范围与手动导入' :
+                section === 'asr' ? '识别引擎、模型档位与转写范围' :
                 section === 'learning' ? '目标、阈值、字幕与快捷键' :
                 section === 'data' ? '存储占用、日志与清理' : '版本与隐私说明'}
             </div>
@@ -154,7 +154,7 @@ export function App() {
             {section === 'ai' ? (
               <AiSection secrets={secrets} setSecrets={setSecrets} notify={notify} />
             ) : section === 'asr' ? (
-              <AsrSection settings={settings} patchSettings={patchSettings} notify={notify} />
+              <AsrSection settings={settings} secrets={secrets} setSecrets={setSecrets} patchSettings={patchSettings} notify={notify} />
             ) : section === 'learning' ? (
               <LearningSection settings={settings} patchSettings={patchSettings} />
             ) : section === 'data' ? (
@@ -430,19 +430,32 @@ function ProviderModal({
 
 function AsrSection({
   settings,
+  secrets,
+  setSecrets,
   patchSettings,
   notify,
 }: {
   settings: AppSettings;
+  secrets: SecretsStore;
+  setSecrets: (s: SecretsStore) => void;
   patchSettings: (patch: Partial<AppSettings>) => Promise<void>;
   notify: (text: string, error?: boolean) => void;
 }) {
+  const engine = settings.asr.engine ?? 'local';
   const [status, setStatus] = useState<Record<AsrModelTier, { cached: boolean; bytes?: number; state: string; error?: string }>>({
     fast: { cached: false, state: 'missing' },
     standard: { cached: false, state: 'missing' },
     high: { cached: false, state: 'missing' },
   });
   const [downloading, setDownloading] = useState<AsrModelTier | null>(null);
+  // 云端 ASR 草稿（保存前只驻留页面内存；Key 保存进 chrome.storage.local）
+  const [cloudDraft, setCloudDraft] = useState<{ baseUrl: string; apiKey: string; model: string }>(
+    secrets.cloudAsr ?? { baseUrl: '', apiKey: '', model: '' },
+  );
+  const [cloudError, setCloudError] = useState<string | null>(null);
+  const [savingCloud, setSavingCloud] = useState(false);
+  const [testingCloud, setTestingCloud] = useState(false);
+  const [showCloudKey, setShowCloudKey] = useState(false);
 
   const refresh = useCallback(async () => {
     const result = await Promise.all(
@@ -479,6 +492,63 @@ function AsrSection({
 
   const setAsr = (patch: Partial<AppSettings['asr']>) => patchSettings({ asr: { ...settings.asr, ...patch } });
 
+  /** 保存流程照 ProviderModal.save()：urlGuard 校验 → host 权限申请 → secrets 落盘（Key 只进 local 区） */
+  const saveCloud = async () => {
+    setCloudError(null);
+    const baseUrl = cloudDraft.baseUrl.trim().replace(/\/+$/, '');
+    const model = cloudDraft.model.trim();
+    const apiKey = cloudDraft.apiKey.trim();
+    if (!baseUrl) {
+      setCloudError('请填写端点 Base URL（可先点上方预设自动填充）');
+      return;
+    }
+    if (!model) {
+      setCloudError('请填写模型名');
+      return;
+    }
+    if (!apiKey) {
+      setCloudError('请填写 API Key');
+      return;
+    }
+    const guard = checkUrl(baseUrl, { allowLocal: secrets.allowLocalEndpoints });
+    if (!guard.ok) {
+      setCloudError(guard.message ?? '端点地址不合法');
+      return;
+    }
+    const origin = toOriginPattern(baseUrl);
+    if (origin) {
+      const granted = await chrome.permissions.request({ origins: [origin] });
+      if (!granted) {
+        setCloudError('未授予该端点的访问权限，保存失败');
+        return;
+      }
+    }
+    setSavingCloud(true);
+    try {
+      const next = { ...secrets, cloudAsr: { baseUrl, apiKey, model } };
+      await saveSecrets(next);
+      setSecrets(next);
+      setCloudDraft({ baseUrl, apiKey, model });
+      notify('云端 ASR 已保存');
+    } finally {
+      setSavingCloud(false);
+    }
+  };
+
+  /** 测试已保存的云端配置（照 AiSection 测试按钮的反馈样式） */
+  const testCloud = async () => {
+    setCloudError(null);
+    setTestingCloud(true);
+    try {
+      const result = await callOp('asr.testCloudProvider', {});
+      notify(result.ok ? `连接成功：${result.model ?? 'OK'}` : `连接失败：${result.error ?? '未知错误'}`, !result.ok);
+    } catch (err) {
+      notify(err instanceof Error ? err.message : '连接失败', true);
+    } finally {
+      setTestingCloud(false);
+    }
+  };
+
   const importModel = async (files: FileList) => {
     const tier = settings.asr.modelTier;
     const spec = ASR_MODELS[tier];
@@ -509,8 +579,110 @@ function AsrSection({
     <>
       <div className="hdu-card">
         <div className="hdu-section-head">
+          <div className="hdu-section-title">识别引擎</div>
+          <div className="hdu-section-sub">本地 Whisper 或你自配置的云端 ASR 服务</div>
+        </div>
+        <PillTabs
+          value={engine}
+          items={[
+            { value: 'local', label: '本地' },
+            { value: 'cloud', label: '云端' },
+          ]}
+          onChange={(next) => void setAsr({ engine: next })}
+        />
+        <div className="hdu-hint" style={{ marginTop: 8 }}>
+          {engine === 'cloud'
+            ? '高精度云端转写：音频片段（60 秒/段）会上传至你配置的服务，无需下载本地模型。'
+            : 'Whisper 本地推理 · 音频不出设备'}
+        </div>
+        {engine === 'cloud' ? (
+          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div
+              style={{
+                fontSize: 11.5,
+                lineHeight: 1.7,
+                color: 'var(--gold)',
+                background: 'color-mix(in srgb, var(--gold) 10%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--gold) 35%, transparent)',
+                borderRadius: 12,
+                padding: '10px 13px',
+              }}
+            >
+              转写音频片段（60 秒/段）会发送到你配置的云端 ASR 服务，请确认你信任该服务商。
+            </div>
+            <Field label="预设">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {CLOUD_ASR_PRESETS.map((preset) => (
+                  <button
+                    type="button"
+                    key={preset.label}
+                    className="hdu-filter-pill"
+                    onClick={() =>
+                      setCloudDraft((draft) => ({
+                        ...draft,
+                        baseUrl: preset.baseUrl || draft.baseUrl,
+                        model: preset.model || draft.model,
+                      }))
+                    }
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </Field>
+            <Field label="端点 Base URL" hint="OpenAI 兼容接口，插件会拼接 /v1/audio/transcriptions">
+              <TextInput
+                value={cloudDraft.baseUrl}
+                onChange={(e) => setCloudDraft({ ...cloudDraft, baseUrl: e.target.value })}
+                placeholder="https://api.siliconflow.cn"
+              />
+            </Field>
+            <Field label="模型">
+              <TextInput
+                value={cloudDraft.model}
+                onChange={(e) => setCloudDraft({ ...cloudDraft, model: e.target.value })}
+                placeholder="FunAudioLLM/SenseVoiceSmall"
+              />
+            </Field>
+            <Field label="API Key" hint="仅保存在 chrome.storage.local，不参与账号云同步；日志会自动打码。">
+              <div style={{ display: 'flex', gap: 6 }}>
+                <TextInput
+                  type={showCloudKey ? 'text' : 'password'}
+                  value={cloudDraft.apiKey}
+                  onChange={(e) => setCloudDraft({ ...cloudDraft, apiKey: e.target.value })}
+                  placeholder="sk-..."
+                  style={{ flex: 1 }}
+                />
+                <Button size="small" variant="ghost" icon={showCloudKey ? 'eyeOff' : 'eye'} onClick={() => setShowCloudKey((v) => !v)}>
+                  {showCloudKey ? '隐藏' : '显示'}
+                </Button>
+              </div>
+            </Field>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Button size="small" variant="primary" loading={savingCloud} onClick={() => void saveCloud()}>保存</Button>
+              <Button size="small" variant="ghost" icon="target" loading={testingCloud} onClick={() => void testCloud()}>测试连接</Button>
+            </div>
+            {cloudError ? <div className="hdu-error-text">{cloudError}</div> : null}
+            <div className="hdu-hint">
+              保存时会为自定义端点申请 host 权限；拒绝授权则无法保存。「测试连接」验证的是已保存的配置。
+              分片缓存按引擎隔离：切换引擎后互不复用旧分片。
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      <div
+        className="hdu-card"
+        style={{
+          marginTop: 14,
+          ...(engine === 'cloud' ? { opacity: 0.55, pointerEvents: 'none' as const } : {}),
+        }}
+      >
+        <div className="hdu-section-head">
           <div className="hdu-section-title">转写模型</div>
-          <div className="hdu-section-sub">在本机运行，音频不出设备</div>
+          <div className="hdu-section-sub">
+            {engine === 'cloud' ? '云端引擎无需下载本地模型' : '在本机运行，音频不出设备'}
+          </div>
           <div className="hdu-section-actions">
             <Button size="small" variant="ghost" icon="refresh" onClick={() => void refresh()}>刷新状态</Button>
           </div>
@@ -1121,7 +1293,7 @@ function AboutSection() {
       </div>
       <div className="hdu-divider" />
       <dl className="hdu-kv">
-        <dt>隐私</dt><dd>音频与模型推理不出本机；不读取、不存储、不转发 Cookie 与 Token。</dd>
+        <dt>隐私</dt><dd>数据只保存在本机；转写默认在本机进行，可选的云端 ASR 由你在设置中显式配置；不读取、不存储、不转发 Cookie 与 Token。</dd>
         <dt>站点写接口</dt><dd>不调用任何写接口，不污染站点观看记录、收藏与笔记。</dd>
         <dt>AI 内容</dt><dd>所有 AI 生成内容均带「AI 生成」标识；AI 不可用时功能置灰，不阻塞播放。</dd>
         <dt>转载</dt><dd>仅供个人学习辅助；补看清单等仅供个人参考，非考勤依据。</dd>

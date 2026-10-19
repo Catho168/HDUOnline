@@ -14,6 +14,7 @@ export type AppErrorCode =
   | 'ASR_PARSE_FAILED'
   | 'ASR_NETWORK_FAILED'
   | 'ASR_INFER_FAILED'
+  | 'ASR_AUTH_FAILED'
   | 'ASR_MEMORY_PRESSURE'
   | 'ASR_UNSUPPORTED_FORMAT'
   | 'ASR_CANCELLED'
@@ -46,6 +47,7 @@ const FRIENDLY: Record<AppErrorCode, string> = {
   ASR_PARSE_FAILED: '视频文件结构解析失败',
   ASR_NETWORK_FAILED: '音频拉取中断，请检查网络后继续',
   ASR_INFER_FAILED: '语音识别推理失败，请重试（若反复失败可切换模型档位）',
+  ASR_AUTH_FAILED: '云端转写服务鉴权失败，请检查 API Key 与端点配置',
   ASR_MEMORY_PRESSURE: '内存压力过大，已停止转写（可稍后从断点继续）',
   ASR_UNSUPPORTED_FORMAT: '该节次音频格式暂不支持转写',
   ASR_CANCELLED: '转写已取消',

@@ -43,6 +43,8 @@ interface JobPayload {
   modelTier: ModelTier;
   lang: 'zh' | 'en' | 'auto';
   glossaryPrompt?: string;
+  /** 识别引擎（默认 local；cloud 时 Offscreen 从 secrets 注入 cloudAsr 后随 payload 下发） */
+  engine?: 'local' | 'cloud';
   /** 只转写该时间窗（§5.2 B1：片段流式，只转当前进度前后 x 分钟） */
   window?: { start: number; end: number };
 }
@@ -86,6 +88,7 @@ function errorKindOf(err: unknown): 'network' | 'decode' | 'model' | 'memory' | 
     case 'ASR_MODEL_MISSING':
     case 'ASR_MODEL_DOWNLOAD_FAILED':
       return 'model';
+    case 'ASR_AUTH_FAILED':
     case 'ASR_INFER_FAILED':
       return 'model';
     case 'ASR_MEMORY_PRESSURE':
@@ -296,7 +299,15 @@ async function startJob(payload: JobPayload): Promise<void> {
     const secrets = await loadSecrets();
     ensureWorker().postMessage({
       type: 'W_START',
-      payload: { ...payload, remoteHost: secrets.modelSource.remoteHost, wasmBaseUrl: runtime.getURL('wasm/') },
+      payload: {
+        ...payload,
+        remoteHost: secrets.modelSource.remoteHost,
+        wasmBaseUrl: runtime.getURL('wasm/'),
+        // 云端引擎：把 secrets 中的云端 ASR 配置（含 Key）注入 Worker，与 remoteHost 同模式
+        ...(payload.engine === 'cloud' && secrets.cloudAsr
+          ? { cloudAsr: { ...secrets.cloudAsr, allowLocalEndpoints: secrets.allowLocalEndpoints } }
+          : {}),
+      },
     } satisfies WorkerInbound);
   } catch (err) {
     if (activeJob?.courId === payload.courId) activeJob = null;
@@ -350,7 +361,14 @@ async function runFallback(job: ActiveJob, primaryError?: SerializedAppError): P
   if (!activeJob || activeJob.token !== job.token) return;
   ensureWorker().postMessage({
     type: 'W_FEED_BEGIN',
-    payload: { ...payload, remoteHost: secrets.modelSource.remoteHost, wasmBaseUrl: runtime.getURL('wasm/') },
+    payload: {
+      ...payload,
+      remoteHost: secrets.modelSource.remoteHost,
+      wasmBaseUrl: runtime.getURL('wasm/'),
+      ...(payload.engine === 'cloud' && secrets.cloudAsr
+        ? { cloudAsr: { ...secrets.cloudAsr, allowLocalEndpoints: secrets.allowLocalEndpoints } }
+        : {}),
+    },
   } satisfies WorkerInbound);
 }
 
@@ -599,6 +617,13 @@ runtime.onMessage((raw) => {
         const [secrets, settings] = await Promise.all([loadSecrets(), loadSettings()]);
         const tier = payload.modelTier ?? settings.asr.modelTier;
         warmupTier = tier;
+        // 云端引擎无需下载本地模型：直接回报就绪（device 标记为 cloud）
+        if (settings.asr.engine === 'cloud') {
+          lastDevice = 'cloud';
+          warmupTier = null;
+          toSw({ type: 'OFFSCREEN_WARMUP_DONE', ok: true, device: 'cloud' });
+          return;
+        }
         ensureWorker().postMessage({
           type: 'W_WARMUP',
           modelTier: tier,
@@ -662,6 +687,7 @@ async function handleAsrStart(payload: Partial<JobPayload>): Promise<void> {
     modelTier: payload.modelTier ?? settings.asr.modelTier,
     lang: payload.lang ?? settings.asr.lang,
     glossaryPrompt: payload.glossaryPrompt,
+    engine: payload.engine,
     window: payload.window,
   });
 }

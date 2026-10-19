@@ -205,7 +205,7 @@ export interface TranscriptEntity {
   glossaryVersion: number;
   createdAt: number;
   updatedAt?: number;
-  source: 'local-asr';
+  source: 'local-asr' | 'cloud-asr';
   /** 已覆盖音频秒数（区间并集） */
   coveredSec?: number;
   /** 已实际处理过的音频区间（与“有文字的区间”不同：静音区间也算已处理） */
@@ -231,6 +231,8 @@ export interface AsrChunkEntity {
   createdAt: number;
   /** 生成该分片的管线版本；旧版本分片不再参与组装 */
   pipelineVersion?: number;
+  /** 生成该分片的引擎；缺失视为 local，换引擎后旧分片不再复用 */
+  engine?: 'local' | 'cloud';
 }
 
 /** 一轮转写的质量统计（用于判断“没识别到语音”还是“时间戳不可靠”） */
@@ -278,6 +280,8 @@ export interface AsrJobEntity {
   window?: { start: number; end: number };
   /** 自动跟进作业（静默） */
   auto?: boolean;
+  /** 作业使用的识别引擎（缺失视为 local，与分片缓存的引擎隔离口径一致） */
+  engine?: 'local' | 'cloud';
   /** 完成后的质量提示（例如“几乎没有识别到有效语音”） */
   warning?: string;
   createdAt: number;
@@ -468,6 +472,8 @@ export interface AppSettings {
   screenshotWatermark: boolean;
   captionStyle: CaptionStyle;
   asr: {
+    /** 识别引擎：本地 Whisper（默认，音频不出设备）或用户自配置的云端 ASR */
+    engine: 'local' | 'cloud';
     modelTier: 'fast' | 'standard' | 'high';
     autoWarmup: boolean;
     autoTranscribeOnOpen: boolean;
@@ -510,6 +516,8 @@ export interface SecretsStore {
   allowLocalEndpoints: boolean;
   modelSource: { remoteHost: string };
   userGlossary: Record<string, string>;
+  /** 云端 ASR（OpenAI 兼容 /v1/audio/transcriptions）；Key 只存本机，默认未配置 */
+  cloudAsr: { baseUrl: string; apiKey: string; model: string } | null;
 }
 
 // ───────────────────────── 统计与报表 ─────────────────────────

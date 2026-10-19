@@ -15,7 +15,7 @@ import { AppError, toAppError } from '@/core/shared/errors';
 import { createLogger } from '@/core/shared/logger';
 import type { OffscreenOutbound } from '@/core/shared/messages';
 import { sendToOffscreen } from '@/core/shared/runtime';
-import { loadSettings } from '@/core/shared/settings';
+import { loadSecrets, loadSettings } from '@/core/shared/settings';
 import type { AsrChunkEntity, AsrJobEntity, SessionMeta, TranscriptSegment } from '@/core/shared/types';
 import { applyGlossaryToSegments, buildGlossaryPrompt, glossaryVersion, loadMergedGlossary } from '@/core/asr/glossary';
 import { sanitizeSegments } from '@/core/asr/postprocess';
@@ -195,16 +195,28 @@ export async function startTranscription(args: StartArgs): Promise<AsrJobEntity>
     return existing;
   }
 
+  const settings = await loadSettings();
+  const engine = settings.asr.engine ?? 'local';
+  const secrets = await loadSecrets();
+  if (engine === 'cloud' && !secrets.cloudAsr) {
+    throw new AppError('INVALID_INPUT', {
+      userMessage: '云端转写尚未配置：请在设置「转写与模型」中选择云端引擎并填写服务地址与 API Key',
+      retryable: false,
+    });
+  }
+
   if (!args.force) {
     const transcript = await getTranscript(courId);
     // 只有"当前管线版本的完整整段转写"才算缓存命中：片段转写是有意不完整的，
     // 后续窗口要继续累积；旧版本产物可能带时间戳塌陷/幻觉，必须重转（§5.2 B1）。
+    // 换引擎后旧引擎的转写不再复用（source 与当前引擎不一致 → 视为未转写）。
     if (
       transcript &&
       transcript.pipelineVersion === ASR_PIPELINE_VERSION &&
       !transcript.partial &&
       transcript.window === undefined &&
-      transcript.segments.length > 0
+      transcript.segments.length > 0 &&
+      ((transcript.source === 'cloud-asr' ? 'cloud' : 'local') === engine)
     ) {
       log.info('转写缓存命中', { courId });
       return {
@@ -235,7 +247,6 @@ export async function startTranscription(args: StartArgs): Promise<AsrJobEntity>
     throw new AppError('INVALID_INPUT', { userMessage: '尚未获取到课次时长，请等待页面加载完成后重试', retryable: true });
   }
 
-  const settings = await loadSettings();
   const modelTier = args.modelTier ?? settings.asr.modelTier;
   const lang = args.lang ?? settings.asr.lang;
   const viewNum = args.viewNum ?? 1;
@@ -263,6 +274,8 @@ export async function startTranscription(args: StartArgs): Promise<AsrJobEntity>
     // 旧管线产物不复用：时间戳/幻觉问题可能来自旧后处理，必须重新转写
     .filter((c) => c.pipelineVersion === ASR_PIPELINE_VERSION)
     .filter((c) => c.viewNum === viewNum)
+    // 分片缓存按引擎隔离：换引擎后旧引擎的分片不再复用（旧记录缺 engine 视为 local）
+    .filter((c) => (c.engine ?? 'local') === engine)
     // 窗口作业只接管窗口内的分片，避免与窗口外的旧分片混算进度
     .filter((c) => chunkInWindow(c.chunkIndex, ASR_PARAMS.chunkSec, durationSec, window))
     .map((c) => c.chunkIndex)
@@ -272,12 +285,14 @@ export async function startTranscription(args: StartArgs): Promise<AsrJobEntity>
     courId,
     status: 'extracting',
     viewNum,
-    model: ASR_MODELS[modelTier].modelId,
+    // 云端引擎记录云端模型名（cloud:{model}），本地引擎记录本地档位模型 ID
+    model: engine === 'cloud' ? `cloud:${secrets.cloudAsr?.model ?? 'unknown'}` : ASR_MODELS[modelTier].modelId,
     durationSec,
     progress: Math.min(1, doneChunks.length / plannedChunks),
     doneChunks: doneChunks.length,
     totalChunks: plannedChunks,
     window,
+    engine,
     auto: args.auto === true ? true : undefined,
     createdAt: existing?.createdAt ?? Date.now(),
     updatedAt: Date.now(),
@@ -305,6 +320,7 @@ export async function startTranscription(args: StartArgs): Promise<AsrJobEntity>
         modelTier,
         lang,
         glossaryPrompt,
+        engine,
         window,
       },
     });
@@ -368,11 +384,13 @@ export interface FollowReply {
  */
 export async function planFollow(args: FollowArgs): Promise<FollowReply> {
   const settings = await loadSettings();
+  const engine = settings.asr.engine ?? 'local';
   const enabled =
     settings.modules.a === true && settings.asr.windowMode === 'around' && settings.asr.streamFollow === true;
 
   // 整段转写已完成时不需要再跟进：整段作业完成会清掉分片，若此时再跑窗口作业，
   // 增量落库会把完整字幕重建成只剩当前窗口的局部字幕。旧版本整段转写不算完成。
+  // 换引擎后旧引擎的完整转写不再视为覆盖（与 startTranscription 的缓存命中同口径）。
   if (enabled) {
     const transcript = await getTranscript(args.courId).catch(() => null);
     if (
@@ -380,7 +398,8 @@ export async function planFollow(args: FollowArgs): Promise<FollowReply> {
       transcript.pipelineVersion === ASR_PIPELINE_VERSION &&
       !transcript.partial &&
       transcript.window === undefined &&
-      transcript.segments.length > 0
+      transcript.segments.length > 0 &&
+      (transcript.source === 'cloud-asr' ? 'cloud' : 'local') === engine
     ) {
       log.debug('整段转写已完成，跳过自动跟进', { courId: args.courId });
       return { start: false, reason: 'covered' };
@@ -399,6 +418,8 @@ export async function planFollow(args: FollowArgs): Promise<FollowReply> {
     doneChunks = (await listAsrChunks(args.courId))
       .filter((c) => c.pipelineVersion === ASR_PIPELINE_VERSION)
       .filter((c) => c.viewNum === viewNum)
+      // 分片缓存按引擎隔离（与 startTranscription 同口径）
+      .filter((c) => (c.engine ?? 'local') === engine)
       .map((c) => c.chunkIndex);
   }
 
@@ -507,6 +528,8 @@ export async function handleOffscreenEvent(payload: OffscreenOutbound): Promise<
     }
 
     case 'OFFSCREEN_ASR_CHUNK_DONE': {
+      // 分片落库带上引擎标记：换引擎后旧分片不再参与组装/续跑（缓存按引擎隔离）
+      const jobForChunk = runs.get(payload.courId)?.job ?? (await getAsrJob(payload.courId));
       const chunk: AsrChunkEntity = {
         key: `${payload.courId}:${payload.viewNum}:${payload.chunkIndex}`,
         courId: payload.courId,
@@ -517,6 +540,7 @@ export async function handleOffscreenEvent(payload: OffscreenOutbound): Promise<
         segments: payload.segments,
         createdAt: Date.now(),
         pipelineVersion: ASR_PIPELINE_VERSION,
+        engine: jobForChunk?.engine ?? 'local',
       };
       await putAsrChunk(chunk);
       await writePartialTranscript(payload.courId);
@@ -543,6 +567,8 @@ export async function handleOffscreenEvent(payload: OffscreenOutbound): Promise<
             lang: (await loadSettings()).asr.lang,
             durationSec: payload.durationSec,
             window: job?.window,
+            engine: job?.engine ?? 'local',
+            source: job?.engine === 'cloud' ? 'cloud-asr' : 'local-asr',
           },
           { keepChunks: Boolean(job?.window || job?.auto) },
         );
@@ -666,8 +692,10 @@ export async function handleOffscreenEvent(payload: OffscreenOutbound): Promise<
 /** 分片完成后写入 partial 转写，便于面板边转写边显示字幕 */
 async function writePartialTranscript(courId: number): Promise<void> {
   try {
+    const ctxJob = runs.get(courId)?.job ?? (await getAsrJob(courId));
+    const engine = ctxJob?.engine ?? 'local';
     const chunks = (await listAsrChunks(courId)).filter(
-      (chunk) => chunk.pipelineVersion === ASR_PIPELINE_VERSION,
+      (chunk) => chunk.pipelineVersion === ASR_PIPELINE_VERSION && (chunk.engine ?? 'local') === engine,
     );
     if (chunks.length === 0) return;
     const ctx = runs.get(courId);
@@ -714,7 +742,7 @@ async function writePartialTranscript(courId: number): Promise<void> {
         lang: (await loadSettings()).asr.lang,
         glossaryVersion: glossaryVersion(glossary),
         createdAt: existing?.createdAt ?? Date.now(),
-        source: 'local-asr',
+        source: engine === 'cloud' ? 'cloud-asr' : 'local-asr',
         coveredSec: coveredAudioSec(chunks, durationSec),
         coverage: coveredRanges(chunks, durationSec),
         durationSec,
@@ -732,7 +760,7 @@ async function writePartialTranscript(courId: number): Promise<void> {
       lang: (await loadSettings()).asr.lang,
       glossaryVersion: glossaryVersion(glossary),
       createdAt: existing?.createdAt ?? Date.now(),
-      source: 'local-asr',
+      source: engine === 'cloud' ? 'cloud-asr' : 'local-asr',
       coveredSec: coveredAudioSec(chunks, durationSec),
       coverage: coveredRanges(chunks, durationSec),
       durationSec,

@@ -94,6 +94,8 @@ function buildOptions(payload: WorkerStartPayload, controls: RunControls): Pipel
     remoteHost: payload.remoteHost,
     wasmBaseUrl: payload.wasmBaseUrl,
     glossaryPrompt: payload.glossaryPrompt,
+    engine: payload.engine,
+    cloudAsr: payload.cloudAsr,
     window: payload.window,
     shouldStop: controls.shouldStop,
     waitIfPaused: controls.waitIfPaused,
@@ -115,6 +117,7 @@ function classifyErrorKind(err: unknown): 'network' | 'decode' | 'model' | 'memo
     case 'ASR_MODEL_MISSING':
     case 'ASR_MODEL_DOWNLOAD_FAILED':
       return 'model';
+    case 'ASR_AUTH_FAILED':
     case 'ASR_INFER_FAILED':
       return 'model';
     case 'ASR_MEMORY_PRESSURE':
@@ -196,14 +199,17 @@ async function handleFedMode(payload: WorkerStartPayload, gen: number): Promise<
   };
 
   try {
-    // 主路径可能死在音轨探测、尚未加载模型；兜底回灌前必须先把管线准备好
-    await loadPipeline({
-      modelTier: payload.modelTier,
-      lang: payload.lang,
-      remoteHost: payload.remoteHost,
-      wasmBaseUrl: payload.wasmBaseUrl,
-      onProgress: (data) => controls.post({ type: 'W_MODEL_PROGRESS', payload: data }),
-    });
+    // 主路径可能死在音轨探测、尚未加载模型；兜底回灌前必须先把管线准备好。
+    // 云端引擎不依赖本地模型，跳过加载（不下载 GB 级权重）。
+    if (payload.engine !== 'cloud') {
+      await loadPipeline({
+        modelTier: payload.modelTier,
+        lang: payload.lang,
+        remoteHost: payload.remoteHost,
+        wasmBaseUrl: payload.wasmBaseUrl,
+        onProgress: (data) => controls.post({ type: 'W_MODEL_PROGRESS', payload: data }),
+      });
+    }
 
     for (let index = 0; index < payload.totalChunks; index += 1) {
       if (controls.shouldStop() === 'cancel') throw new AppError('ASR_CANCELLED');
@@ -233,6 +239,9 @@ async function handleFedMode(payload: WorkerStartPayload, gen: number): Promise<
           glossaryPrompt: opts.glossaryPrompt,
           shouldStop: controls.shouldStop,
           waitIfPaused: controls.waitIfPaused,
+          ...(payload.engine === 'cloud' && payload.cloudAsr
+            ? { cloud: { cfg: payload.cloudAsr } }
+            : {}),
         });
         segments = result.segments;
         stats.audioSec += result.stats.audioSec;
@@ -266,7 +275,7 @@ async function handleFedMode(payload: WorkerStartPayload, gen: number): Promise<
       payload: {
         segmentCount,
         coveredSec: Math.round(coveredSec),
-        model: 'fallback',
+        model: payload.engine === 'cloud' ? `cloud:${payload.cloudAsr?.model ?? 'unknown'}` : 'fallback',
         stats: { ...stats, segmentCount },
       },
     });
@@ -355,6 +364,11 @@ function setup(): void {
         break;
 
       case 'W_WARMUP':
+        // 云端引擎无需下载本地模型：直接回报就绪
+        if (message.engine === 'cloud') {
+          post({ type: 'W_WARMUP_DONE', ok: true, device: 'cloud' });
+          break;
+        }
         void warmup({
           modelTier: message.modelTier,
           lang: message.lang,

@@ -64,6 +64,9 @@ export interface OffscreenAsrStart {
   modelTier: 'fast' | 'standard' | 'high';
   lang: 'zh' | 'en' | 'auto';
   glossaryPrompt?: string;
+  /** 识别引擎：默认 local；cloud 时由 Offscreen 注入 cloudAsr 配置 */
+  engine?: 'local' | 'cloud';
+  cloudAsr?: { baseUrl: string; apiKey: string; model: string; allowLocalEndpoints?: boolean };
   window?: { start: number; end: number };
 }
 

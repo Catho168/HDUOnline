@@ -135,11 +135,20 @@ export async function clearAsrChunks(
  */
 export async function assembleTranscript(
   courId: number,
-  meta: { model: string; lang: string; durationSec: number; window?: { start: number; end: number } },
+  meta: {
+    model: string;
+    lang: string;
+    durationSec: number;
+    window?: { start: number; end: number };
+    /** 识别引擎（缺失视为 local）：只组装当前引擎的分片，source 同步标记 */
+    engine?: 'local' | 'cloud';
+    source?: 'local-asr' | 'cloud-asr';
+  },
   opts: { keepChunks?: boolean } = {},
 ): Promise<TranscriptEntity> {
+  const engine = meta.engine ?? 'local';
   const chunks = (await listAsrChunks(courId)).filter(
-    (chunk) => chunk.pipelineVersion === ASR_PIPELINE_VERSION,
+    (chunk) => chunk.pipelineVersion === ASR_PIPELINE_VERSION && (chunk.engine ?? 'local') === engine,
   );
   if (chunks.length === 0) {
     throw new AppError('ASR_PARSE_FAILED', { detail: '没有可用的转写分片' });
@@ -184,7 +193,7 @@ export async function assembleTranscript(
     lang: meta.lang,
     glossaryVersion: glossaryVersion(glossary),
     createdAt: Date.now(),
-    source: 'local-asr',
+    source: meta.source ?? (engine === 'cloud' ? 'cloud-asr' : 'local-asr'),
     coveredSec: coveredAudioSec(chunks, meta.durationSec),
     coverage: coveredRanges(chunks, meta.durationSec),
     durationSec: meta.durationSec,

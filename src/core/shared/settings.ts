@@ -45,6 +45,12 @@ export async function getActiveProvider(): Promise<SecretsStore['providers'][num
   return secrets.providers.find((p) => p.id === secrets.activeProviderId) ?? null;
 }
 
+/** 读取云端 ASR 配置（未配置时返回 null；调用方负责提示去设置中填写） */
+export async function getCloudAsr(): Promise<SecretsStore['cloudAsr']> {
+  const secrets = await loadSecrets();
+  return secrets.cloudAsr ?? null;
+}
+
 export function onSettingsChanged(cb: (settings: AppSettings) => void): () => void {
   const g = globalThis as {
     chrome?: {

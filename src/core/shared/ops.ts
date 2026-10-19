@@ -162,6 +162,8 @@ export interface OpMap {
   };
   'asr.model.download': { args: { tier: 'fast' | 'standard' | 'high' }; result: { started: boolean } };
   'asr.model.clear': { args: { tier?: 'fast' | 'standard' | 'high' }; result: void };
+  /** 云端 ASR 连通性测试（非流式短请求，SW 内同步执行即可） */
+  'asr.testCloudProvider': { args: Record<string, never>; result: { ok: boolean; model?: string; error?: string } };
 
   // 词表
   'glossary.getUser': { args: Record<string, never>; result: Record<string, string> };

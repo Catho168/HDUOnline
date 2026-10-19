@@ -120,6 +120,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   screenshotWatermark: true,
   captionStyle: { ...DEFAULT_CAPTION_STYLE },
   asr: {
+    engine: 'local',
     modelTier: 'standard',
     autoWarmup: true,
     autoTranscribeOnOpen: false,
@@ -152,6 +153,7 @@ export const DEFAULT_SECRETS: SecretsStore = {
   allowLocalEndpoints: false,
   modelSource: { remoteHost: 'https://hf-mirror.com' },
   userGlossary: {},
+  cloudAsr: null,
 };
 
 // ───────────────────────── ASR 模型档位 ─────────────────────────
@@ -252,6 +254,35 @@ export const ASR_PARAMS = {
   followCancelCooldownMs: 10 * 60_000,
   glossaryPromptLimit: 200,
 } as const;
+
+// ───────────────────────── 云端 ASR ─────────────────────────
+
+/**
+ * 云端 ASR 预设（OpenAI 兼容 `POST {base}/v1/audio/transcriptions`）。
+ * 一套协议覆盖 OpenAI / Groq / 硅基流动 等端点：选预设只需填 API Key。
+ * 硅基流动为 FunASR Paraformer 系列（中文强、国内直连、有免费额度），
+ * preset 默认给 SenseVoiceSmall；如需 Paraformer 可自行改模型名为
+ * `FunAudioLLM/paraformer-zh`（同接口、同格式）。
+ */
+export const CLOUD_ASR_PRESETS: Array<{
+  label: string;
+  baseUrl: string;
+  model: string;
+}> = [
+  { label: 'OpenAI', baseUrl: 'https://api.openai.com', model: 'whisper-1' },
+  { label: 'Groq', baseUrl: 'https://api.groq.com/openai', model: 'whisper-large-v3-turbo' },
+  { label: '硅基流动', baseUrl: 'https://api.siliconflow.cn', model: 'FunAudioLLM/SenseVoiceSmall' },
+  { label: '自定义', baseUrl: '', model: '' },
+];
+
+/** 云端 ASR 超时：60 秒切片足够，整体超时给足大文件响应余量 */
+export const CLOUD_ASR_TIMEOUTS = {
+  connectMs: 15_000,
+  totalMs: 120_000,
+} as const;
+
+/** 429 / 5xx / 网络错误的重试次数（适配层不内建重试，由编排层按此上限退避） */
+export const CLOUD_ASR_MAX_RETRIES = 2;
 
 // ───────────────────────── LLM ─────────────────────────
 

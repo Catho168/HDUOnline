@@ -166,7 +166,7 @@ export function App() {
         ) : null}
 
         <div className="hdu-hint">
-          数据只保存在本机 · 音频不出设备 · 不调用站点写接口
+          数据只保存在本机 · 不调用站点写接口
         </div>
       </main>
 

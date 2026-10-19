@@ -16,6 +16,7 @@ import { estimateStorage } from '@/core/shared/storage';
 import { clamp, localDayKey, startOfLocalDay } from '@/core/shared/utils';
 import { loadCourseGlossary, loadUserGlossary, saveCourseGlossary, saveUserGlossary } from '@/core/asr/glossary';
 import { checkTierCached, clearTierCache, listModelFiles } from '@/core/asr/modelCache';
+import { testCloudAsr } from '@/core/asr/cloud';
 import { testProvider } from '@/core/llm/runner';
 import {
   applyGlossary,
@@ -132,6 +133,24 @@ export const handlers: HandlerTable = {
   'asr.model.clear': async ({ tier }) => {
     await clearTierCache(tier);
     invalidateModelState(tier);
+  },
+  'asr.testCloudProvider': async () => {
+    const secrets = await loadSecrets();
+    if (!secrets.cloudAsr) {
+      return { ok: false, error: '尚未配置云端 ASR：请先在设置「转写与模型」中填写服务地址、模型与 API Key' };
+    }
+    try {
+      return await testCloudAsr(
+        {
+          baseUrl: secrets.cloudAsr.baseUrl,
+          apiKey: secrets.cloudAsr.apiKey,
+          model: secrets.cloudAsr.model,
+        },
+        { allowLocalEndpoints: secrets.allowLocalEndpoints },
+      );
+    } catch (err) {
+      return { ok: false, error: toAppError(err).userMessage };
+    }
   },
 
   // ── 词表 ──

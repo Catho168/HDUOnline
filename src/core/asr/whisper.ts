@@ -13,6 +13,7 @@ import { AppError, toAppError } from '../shared/errors';
 import { createLogger } from '../shared/logger';
 import { runtime } from '../shared/runtime';
 import { createOpfsCache, opfsAvailable } from './modelCache';
+import { transcribePcmCloud, type CloudAsrConfig } from './cloud';
 import { analyzeAudioLevel, buildSegmentsFromWhisper } from './postprocess';
 import type { AsrQualityStats, TranscriptSegment } from '../shared/types';
 
@@ -283,6 +284,8 @@ export interface TranscribeOptions {
   offsetSec: number;
   lang: 'zh' | 'en' | 'auto';
   glossaryPrompt?: string;
+  /** 云端 ASR：传入后不再依赖本地模型，切片经 HTTP 上传转写 */
+  cloud?: { cfg: CloudAsrConfig & { allowLocalEndpoints?: boolean }; fetchImpl?: typeof fetch };
   /** 每 60 秒推理切片之间检查一次暂停/取消 */
   shouldStop?: () => 'none' | 'pause' | 'cancel';
   waitIfPaused?: () => Promise<void>;
@@ -330,8 +333,9 @@ export async function transcribeChunkDetailed(
   pcm: Float32Array,
   opts: TranscribeOptions,
 ): Promise<TranscribeResult> {
-  if (!cached) throw new AppError('ASR_MODEL_MISSING');
-  const pipeline = cached.pipe;
+  // 云端引擎不依赖本地模型（未配置 cloud 时才要求模型已加载）
+  if (!cached && !opts.cloud) throw new AppError('ASR_MODEL_MISSING');
+  const pipeline = cached?.pipe ?? null;
   const sampleRate = ASR_PARAMS.sampleRate;
   const totalSec = pcm.length / sampleRate;
   const stats = emptyStats();
@@ -369,16 +373,44 @@ export async function transcribeChunkDetailed(
 
     const startedAt = Date.now();
     let output: Awaited<ReturnType<WhisperPipeline>>;
+    // 云端切片：HTTP 请求挂上 AbortController，用户取消时中断在途上传/下载
+    const cloudAbort = opts.cloud ? new AbortController() : null;
+    const stopWatcher = cloudAbort
+      ? setInterval(() => {
+          if (opts.shouldStop?.() === 'cancel') cloudAbort.abort();
+        }, 300)
+      : null;
     try {
-      output = await pipeline(slice, {
-        language: opts.lang === 'auto' ? undefined : opts.lang,
-        task: 'transcribe',
-        return_timestamps: true,
-        chunk_length_s: 30,
-        stride_length_s: 5,
-        initial_prompt: opts.glossaryPrompt,
-      });
+      if (opts.cloud) {
+        const { chunks } = await transcribePcmCloud(slice, opts.cloud.cfg, {
+          lang: opts.lang,
+          prompt: opts.glossaryPrompt,
+          signal: cloudAbort?.signal,
+          allowLocalEndpoints: opts.cloud.cfg.allowLocalEndpoints,
+          fetchImpl: opts.cloud.fetchImpl,
+        });
+        output = {
+          chunks: chunks.map((chunk) => ({
+            text: chunk.text,
+            timestamp: chunk.timestamp ?? undefined,
+          })),
+        };
+      } else if (pipeline) {
+        output = await pipeline(slice, {
+          language: opts.lang === 'auto' ? undefined : opts.lang,
+          task: 'transcribe',
+          return_timestamps: true,
+          chunk_length_s: 30,
+          stride_length_s: 5,
+          initial_prompt: opts.glossaryPrompt,
+        });
+      } else {
+        throw new AppError('ASR_MODEL_MISSING');
+      }
     } catch (err) {
+      if (cloudAbort?.signal.aborted || toAppError(err).code === 'ASR_CANCELLED') {
+        throw new AppError('ASR_CANCELLED');
+      }
       if (isEmptyTokenOutput(err)) {
         stats.silentSec += sliceSec;
         log.info('推理切片没有文本 token，按静音跳过', {
@@ -388,11 +420,15 @@ export async function transcribeChunkDetailed(
         });
         continue;
       }
+      // 云端适配层已分类的 ASR_* 错误（鉴权失败/网络/限流）原样上抛，保持错误码口径
+      if (err instanceof AppError && err.code !== 'ASR_INFER_FAILED') throw err;
       throw new AppError('ASR_INFER_FAILED', {
         detail: toAppError(err).detail,
         retryable: true,
         cause: err,
       });
+    } finally {
+      if (stopWatcher !== null) clearInterval(stopWatcher);
     }
     const elapsed = (Date.now() - startedAt) / 1000;
     stats.speechSec += sliceSec;

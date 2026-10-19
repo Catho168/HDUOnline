@@ -3,6 +3,7 @@
 import type { SerializedAppError } from '../shared/errors';
 import type { AsrModelTier } from '../shared/constants';
 import type { AsrQualityStats, TranscriptSegment } from '../shared/types';
+import type { CloudAsrConfig } from './cloud';
 
 export interface WorkerStartPayload {
   courId: number;
@@ -18,6 +19,10 @@ export interface WorkerStartPayload {
   /** 扩展内 wasm 目录（绝对 chrome-extension:// 地址；Worker 内可能拿不到 chrome.*） */
   wasmBaseUrl?: string;
   glossaryPrompt?: string;
+  /** 识别引擎：默认 local（本地 Whisper）；cloud 时跳过模型加载，音频切片上传至云端 ASR */
+  engine?: 'local' | 'cloud';
+  /** 云端 ASR 配置（密钥由 Offscreen 从 secrets 注入；allowLocalEndpoints 与设置同口径） */
+  cloudAsr?: CloudAsrConfig & { allowLocalEndpoints?: boolean };
   /** 只转写该时间窗（§5.2 B1：片段流式，只转当前进度前后 x 分钟） */
   window?: { start: number; end: number };
 }
@@ -25,7 +30,7 @@ export interface WorkerStartPayload {
 export type WorkerInbound =
   | { type: 'W_START'; payload: WorkerStartPayload }
   | { type: 'W_CONTROL'; action: 'pause' | 'resume' | 'cancel' }
-  | { type: 'W_WARMUP'; modelTier: AsrModelTier; lang: 'zh' | 'en' | 'auto'; remoteHost: string; wasmBaseUrl?: string }
+  | { type: 'W_WARMUP'; modelTier: AsrModelTier; lang: 'zh' | 'en' | 'auto'; remoteHost: string; wasmBaseUrl?: string; engine?: 'local' | 'cloud' }
   /** 兜底模式：Offscreen 已解码好 PCM，按 worker 的请求逐片回灌 */
   | { type: 'W_FEED_BEGIN'; payload: WorkerStartPayload }
   | { type: 'W_FEED_PCM'; chunk: { chunkIndex: number; startSec: number; endSec: number; pcm: Float32Array } }

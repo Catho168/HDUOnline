@@ -15,6 +15,7 @@ import { buildSampleTimeline, extractSampleBytes, probeAudioTrack, type ProbeRes
 import { StreamingResampler, concatFloat32, downmixToMono, extractPlanarChannels } from './resample';
 import { loadPipeline, transcribeChunkDetailed, type WhisperEnvConfig } from './whisper';
 import { chunkInWindow, windowAudioSec, windowChunkRange } from './window';
+import type { CloudAsrConfig } from './cloud';
 import type { AsrQualityStats, TranscriptSegment } from '../shared/types';
 
 const log = createLogger('asr-pipeline');
@@ -51,6 +52,9 @@ export interface PipelineOptions {
   /** 扩展内 wasm 资源目录（Offscreen 侧用 chrome.runtime.getURL 生成） */
   wasmBaseUrl?: string;
   glossaryPrompt?: string;
+  /** 识别引擎：默认 local；cloud 时跳过本地模型加载，切片上传至云端 ASR */
+  engine?: 'local' | 'cloud';
+  cloudAsr?: CloudAsrConfig & { allowLocalEndpoints?: boolean };
   /** 只转写该时间窗（§5.2 B1：当前进度 ±x 分钟，省内存与流量） */
   window?: { start: number; end: number };
   onProgress: (p: PipelineProgress) => void;
@@ -126,7 +130,8 @@ export async function runTranscription(
     log.info('检测到分片 MP4，使用顺序流式读取');
   }
 
-  await loadPipeline(envFor(opts));
+  // 云端引擎不需要本地模型（不下载 GB 级权重）
+  if (opts.engine !== 'cloud') await loadPipeline(envFor(opts));
 
   const timeline = buildSampleTimeline(probe.samples, probe.info.timescale);
   const effectiveDuration = Math.min(
@@ -207,6 +212,7 @@ export async function runTranscription(
         glossaryPrompt: opts.glossaryPrompt,
         shouldStop: opts.shouldStop,
         waitIfPaused: opts.waitIfPaused,
+        ...(opts.engine === 'cloud' && opts.cloudAsr ? { cloud: { cfg: opts.cloudAsr } } : {}),
       });
       segments = result.segments;
       stats.audioSec += result.stats.audioSec;
@@ -231,7 +237,8 @@ export async function runTranscription(
   return {
     segmentCount,
     coveredSec: Math.round(processedAudioSec),
-    model: opts.modelTier,
+    // 云端引擎按 cloud:{model} 标记模型来源（作业与转写记录同口径）
+    model: opts.engine === 'cloud' ? `cloud:${opts.cloudAsr?.model ?? 'unknown'}` : opts.modelTier,
     stats,
   };
 }
@@ -436,7 +443,7 @@ export async function transcribeFedPcm(
   opts: PipelineOptions,
   chunks: Array<{ chunkIndex: number; startSec: number; endSec: number; pcm: Float32Array }>,
 ): Promise<{ segmentCount: number; coveredSec: number; model: string; stats: AsrQualityStats }> {
-  await loadPipeline(envFor(opts));
+  if (opts.engine !== 'cloud') await loadPipeline(envFor(opts));
   const skip = new Set(opts.doneChunks);
   const plannedAudioSec = opts.window ? windowAudioSec(opts.window, opts.durationSec) : opts.durationSec;
   let doneChunks = skip.size;
@@ -475,6 +482,7 @@ export async function transcribeFedPcm(
         glossaryPrompt: opts.glossaryPrompt,
         shouldStop: opts.shouldStop,
         waitIfPaused: opts.waitIfPaused,
+        ...(opts.engine === 'cloud' && opts.cloudAsr ? { cloud: { cfg: opts.cloudAsr } } : {}),
       });
       segments = result.segments;
       stats.audioSec += result.stats.audioSec;
@@ -491,5 +499,10 @@ export async function transcribeFedPcm(
   }
   opts.onProgress({ phase: 'finalizing', progress: 1, doneChunks, totalChunks: opts.totalChunks });
   stats.segmentCount = segmentCount;
-  return { segmentCount, coveredSec: Math.round(coveredSec), model: opts.modelTier, stats };
+  return {
+    segmentCount,
+    coveredSec: Math.round(coveredSec),
+    model: opts.engine === 'cloud' ? `cloud:${opts.cloudAsr?.model ?? 'unknown'}` : opts.modelTier,
+    stats,
+  };
 }
