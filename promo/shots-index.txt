@@ -1,0 +1,124 @@
+camera/basic-3d-scene.md | basic-3d-scene | 约 7.5s（225f@30fps；四站，三段飞行  | 中（每次转场有空间惊喜， | impress.js 式空间演示：卡片以不同位置/旋转/缩放散布 3D 空间，相机�
+camera/crash-zoom-punch.md | crash-zoom-punch | 约 0.5s 动作 + 前后 hold（动作 6–11f | 高（瞬时冲击，非持续高能 | 全景一拍急推到目标特写（6f），落位二选一——过冲回弹（弹性）�
+camera/cursor-flyover.md | cursor-flyover | 约 8.0s（240f@30fps；俯瞰 22f · 四站� | 中（等距巡航，节奏靠点击 | 整页俯瞰后，相机依次飞到四个功能区 zoom-in 特写，SVG 光标先一步�
+camera/depth-layer-moves.md | depth-layer-moves | 4–5.5s 持续（demo 165f） | 中（质感型） | 分层深度运镜——多层视差滑轨：3 层速度梯度横移出纵深，滑轨落�
+camera/graze-face-tour.md | graze-face-tour | 单段 4–5s；可多段接力延长 | 中高（运镜持续推进+元素� | 大倾角贴面游走特写——镜头贴着 UI 表面低飞掠过（侧栏树/顶栏/列
+camera/overhead-camera-moves.md | overhead-camera-moves | A 120f（4s）/ B 140f（4.7s） | A 中 / B 中高 | 俯拍揭示两式——tilt-reveal 俯仰抬正揭示、overhead-tabletop-drop 桌面卡�
+camera/space-camera-moves.md | space-camera-moves | A 170f（5.7s，炸开-悬停-合体-收尾标 | 高 | 3D 空间化运镜两式——exploded-view 爆炸分解（构件沿 Z 炸开再合体）�
+camera/steep-tilt-glide.md | steep-tilt-glide | 4s（120f）单镜；页面越宽越可拉长 | 中高（透视炫技+持续运动� | 固定镜头下直立页面以 60° 强透视侧立（右近左远），页面自身沿其
+camera/tension-camera-moves.md | tension-camera-moves | 单式 5–6s（150–170f）；全片合计 � | A 高 / B 低收 | 情绪运镜两式——bullet-time 冻结环绕、pull-back 拉远孤立，相机替观�
+camera/terminal-3d.md | terminal-3d | 约 8.2s（246f@30fps；三站各约 2–3s � | 中（飞行给动感、打字给节 | 三个终端窗散布 3D 空间，相机窗间飞行、途中正弦拉远，每到一窗�
+data/before-after-slider-scrub.md | before-after-slider-scrub | 4–5s | 中（快甩是打击点，慢扫是 | 前后对比拉杆——"处理前/后"两版叠放，分割杆先猛甩后慢扫，杆过
+data/chart-live-moves.md | chart-live-moves | 各 165–192f（5.5–6.4s） | 中高（数据即剧情） | 活体图表三式——oscilloscope-stream 示波流线（曲线右端实时写入+突发
+data/gauge-readout-moves.md | gauge-readout-moves | A 140f（4.7s）/ B 150f（5s） | 中高（机械仪式型） | 仪表读数两式——needle-sweep-selftest 满弧扫针（点火自检指针甩满全�
+data/scroll-brake-moves.md | scroll-brake-moves | A 4–5s / B 5s | 高开中收（速度对比型） | 长卷急刹两式——changelog-scroll-brake 基本款（高速长卷指数减速精准�
+data/timeline-travel.md | timeline-travel | 4–5s | 中高（加速→急刹的节奏型 | 时间轴横移——镜头沿水平刻度轴加速掠过版本刻度，每过一格卡片
+effects/assemble-then-type-flyin.md | assemble-then-type-flyin | 约5.6s（168f@30fps） | 中高（骨架段稀疏、文字段 | 空的暗底网格上，无文字的组件骨架先从四面八方飞入贴合；随后各
+effects/aurora-bloom-bg-flip.md | aurora-bloom-bg-flip | 约5.2s（156f@30fps） | 由低到高（前 2/3 是酝酿，� | 浅灰底从底部升起紫橙柔焦 blob，随后整个底色在约 0.36s 内压暗到近
+effects/brand-frame-snap.md | brand-frame-snap | 单次翻色 ~4.7s（140f）；画框本身可 | 中（翻色瞬间高，其余时间 | 品牌色画框语法——一圈粗纯色画框先于内容长出包住全屏，录屏窗
+effects/fui-hud-moves.md | fui-hud-moves | 2–3s（demo 90f） | 中高（咬合帧是打击点） | FUI/HUD 准星咬合——reticle-lock-on 四个 L 形角标组成的取景框从画外飞
+effects/glow-flyline-moves.md | glow-flyline-moves | A 170f（~5.7s）/ B 140f（~4.7s）/ C 165f� | A 低（底噪级）/ B 中 / C 中� | 暗场光斑与飞线三式——glow-orb-ambient 光斑底噪、flyline-arc 飞线连接�
+effects/icon-performance-moves.md | icon-performance-moves | 156f（5.2s） | 蓄势引入 | 图标表演——attention-bounce 求关注弹跳（图标连跳递增+落地压扁+镜�
+effects/impact-feedback.md | impact-feedback | n/a（元素级技法，寄生在落位动作� | 高（瞬时冲击） | 命中反馈两式——hit-counter 连招计数（顿帧+伤害数字+combo 跳字）、a
+effects/light-play-moves.md | light-play-moves | A 170f ~5.7s / B 150f ~5s | A 中 / B 低 | 光效两式——spotlight-sweep 聚光扫字、sheen 单点扫光
+effects/radial-ripple-phone-chips.md | radial-ripple-phone-chips | 约5.6s（168f@30fps） | 低（安静、有呼吸感，靠同 | 暖沙底四层同心圆错相呼吸如水波，中央手机 mockup 屏内 feed 自动缓�
+effects/riso-print-hits.md | riso-print-hits | 4s（120f，单发） | 高 | 套印错位冲击帧——riso-misregistration-hit 单发：标题撞停瞬间裂成双�
+effects/scan-bracket-sweep.md | scan-bracket-sweep | 约5.0s（150f@30fps） | 中低（机械、克制，节奏全 | 文档弹到中央，四角落下 L 形取景括号，一条扫描光带拖着渐变尾迹
+effects/scanline-annotate-focus.md | scanline-annotate-focus | 约5s（150f@30fps） | 中（机械冷静，节奏由扫描 | 一条扫描线自上而下匀速掠过已存在的页面，越过哪块区块的下缘，
+effects/scanline-assemble-flyin.md | scanline-assemble-flyin | 约5.2s（156f@30fps） | 中高（扫描线是稳的，但每 | 页面开场是一张只有网格与虚线槽位的蓝图画板，一条亮扫描线自上
+effects/slam-entrance-moves.md | slam-entrance-moves | 单式动作段 6–22f + 冲击余波 ~16f +  | 高 | 高能砸入三式——kanada-perspective-snap 金田透视急停、score-slam 比分砸�
+effects/spotlight-sweep-moves.md | spotlight-sweep-moves | 单式 3.5–4.5s；A/B 可串联成巡礼段 | 中低（克制、神秘感，爆点 | 暗场聚光显影三式——A 醒睡扫过（光到即亮光走即暗）、B 贴边泛�
+interaction/autolayout-gap-dial.md | autolayout-gap-dial | ~5s（150f：框选入场 + 预备回收 10f + | 中（工具理性型，爽点在数 | 间距拨盘驱动布局——一排链接块带框选描边+缝隙间距标注，徽章�
+interaction/canvas-materialize-moves.md | canvas-materialize-moves | A ~5s（150f）/ B ~6s（180f） | 中 | 内容"物化上画布"两式——panel-to-canvas 行倒卡（面板表格行沿弧线飞
+interaction/chip-grid-single-select-blackout.md | chip-grid-single-select-blackout | 约5.5s（165f@30fps） | 中低（唯一的爆点是那一帧 | 五个选项 chip 以 3+2 居中排布逐个淡入；选中帧先插一帧灰色按压块�
+interaction/collab-cursor-moves.md | collab-cursor-moves | A ~5.2s（156f） | A 低中（氛围层，可垫任何� | 协作光标当演员——cast-ensemble 五光标群演氛围层（错峰飞入+正弦漂
+interaction/glass-pill-dictation-typing.md | glass-pill-dictation-typing | 约3.3s（100f@30fps） | 低（全片最安静的一拍，只 | 一条定宽玻璃胶囊以约 1.25 倍略大弹出后缓落到位，内部自左淡到右
+interaction/hashtag-to-pill-materialize.md | hashtag-to-pill-materialize | 120f（4s）——打字 ~40f + 硬切胶囊 h | 中（干脆利落，靠硬切给劲 | 话题词打字实体化——居中打出 "#word"（红实心光标恒亮），1 帧硬�
+interaction/picker-carousel-feature-cycle.md | picker-carousel-feature-cycle | 约3.6s（108f@30fps） | 中（每一次吸附都是一个节 | 移动端风竖向选择器——焦点药丸不动、内容穿过它，每项带明显 ou
+interaction/segmented-thumb-hero.md | segmented-thumb-hero | ~3.5s（demo 110f：浮入 18f + 光标 24f +  | 中（微交互特写，精致不轰 | 分段控件 thumb 位移当主角特写——超大胶囊 segmented control 弹簧浮入�
+interaction/theme-switch-moves.md | theme-switch-moves | A 140f（4.7s）/ B 156f（5.2s） | A 中 / B 中高（组合款有完� | 主题切换两式——theme-sweep 斜向扫场（边界扫过处就地换肤）与 palet
+interaction/type-and-filter.md | type-and-filter | 约 2.5s（118–190f） | 中（发牌高能段之后的从容 | 真实 UI 上打字搜索、网格自己收敛成一张卡、点击穿透进详情页
+interaction/voice-waveform-live.md | voice-waveform-live | 172f（~5.7s：入场 14f + 说 1.4s + 停 0.8 | 中（功能性活性，不是炫技 | 录音胶囊实时声纹——64 根细竖条随"说话"起伏，说话时中部高耸、�
+opening/brand-ink-open.md | brand-ink-open | 约 2.8s（83f） | 低（起步位，为后续镜头留 | 墨线十字准星描画→字标逐字压印→打字机副标→满一秒静止再上浮
+opening/crane-rise-reveal.md | crane-rise-reveal | 5.5s（165f：特写 hold 24f + 拉升 102f +  | 中高（持续单向运动，无冲 | 升降臂拉升揭示——开场怼在一行数据特写，相机沿 Y 轴减速升起后
+opening/dataviz-landscape-open.md | dataviz-landscape-open | 5–8s（开场氛围段，一支片 ≤1 次� | 低开缓升（起步位，为后续 | 暗场支流线束地景开场——多条流线汇入主干、虚构 ID 标签浮在线�
+opening/fracture.md | fracture | 约 5.2s（156f@30fps；聚合 0–2.6s · hol | 高（两头高能、中段静止， | 5×5 瓦片从 3D 碎片态按中心波纹逐圈聚合成整面海报，停一拍亮字，
+opening/icon-field-colorize.md | icon-field-colorize | 浮现 ~45f 错峰 + 静置 ~10f + 翻色 12� | 中（浮现是铺垫，翻色瞬间 | 灰阶小图标点阵错峰浮现铺满全屏，停一拍后多道品牌色横带波纹极
+opening/letterspace-materialize.md | letterspace-materialize | 静置 ~15f + 描画 ~50f + 终态静置 ≥30 | 低（静谧仪式感，一次呼吸 | 大字距字标全字符并行连续描画结晶——所有字母同帧起笔、笔画像
+opening/magician-card-flourish.md | magician-card-flourish | 156f（闪光 0.3s + 飞行 1.6s + 定格/扫� | 高（一次性爆点，定格后即 | 午夜蓝暗场上蓝色星芒闪现 0.3s（X 形针状光束旋转 90°+中心辉光放�
+opening/orbit-ring-title-open.md | orbit-ring-title-open | 150f（5s@30fps；马克块 f64 落定后 2.9s | 中（唯一的持续运动是匀速 | 石墨暗场上八张 16:9 暗色内容卡按 45° 均布在 720×380 椭圆上匀速公�
+opening/spotlight-hero-card.md | spotlight-hero-card | 172f（约 5.7s；锁定 f34 → 触地 f142 � | 中（质感最高的一镜，节奏 | 关灯的剧场里一束钨丝聚光（带体积光柱）扫过页面锁定一张卡，斜
+opening/stroke-segment-build.md | stroke-segment-build | 165f（5.5s；揭晓 f105 后 hold 2s） | 低起中收（悬念型，落位帧 | 断笔成字——标题拆成十几段互不相连的笔画乱序逐段点亮，前 70% �
+opening/text-as-mask.md | text-as-mask | 165f（入场 18f + 字内漂移 78f + 吸气  | 中高（漂移段沉稳，接管段 | 文字视频遮罩——瓷白舞台上切出超粗大标题字，字内部透出缓慢平
+outro/grain-dissolve.md | grain-dissolve | 约 2.0s（60f@30fps；砂化 0.26–0.56s ·  | 中高（短促、一次性的能量 | 整行字爆裂成沸腾颗粒噪点并浮现斜纹选区框，噪点云急速凝聚成更
+outro/logo-shrink-wordmark-lockup.md | logo-shrink-wordmark-lockup | 约 4.4s（132f@30fps；收束 0.1–1.2s · � | 中（收束段有冲击力，整体 | 霓虹切口大环快速收束成中央实心小白 O、过冲刹车时换成 video-shotcr
+outro/neon-triple-marquee.md | neon-triple-marquee | 4–5s（demo 150f：18f 逐行点火上电 +  | 中高（持续流动 + 逐行脉冲 | 三行对向霓虹跑马灯 recap——三连词空心霓虹灯管巨字上中下排满一
+outro/outro-group-photo-launch.md | outro-group-photo-launch | 约 4.8s（145f） | 峰值（全片最高点） | 全片元素从四面八方飞来围住字标合影，crane 落机位+舞台光+金尘做�
+outro/ui-strip-away-outro.md | ui-strip-away-outro | ~4.8s（144f：光标就位 34f → 蒸发 ~40 | 中（前段安静操作，中段持 | 减法式收尾——点击 Publish 后整个编辑器 UI 从外围到中心层层错峰�
+outro/ui-to-brand-morph.md | ui-to-brand-morph | A ~4.3s（130f）/ B ~5.6s（168f） | 中高（收尾点睛，一次完整 | UI 变品牌两式——icon-flip-bloom 图标 Y 轴翻扁成竖线、从竖线撑开成�
+rhythm/beat-cut-moves.md | beat-cut-moves | 全程 140f ≈4.7s（活素材 30f + 三闪 + | 高 | 硬切当节拍乐器——连闪定格：三次白闪各硬切同一画面的一个裁切
+rhythm/beat-step-list-theme-cycle.md | beat-step-list-theme-cycle | 铺垫 30f + 每拍 18f × 拍数 + 收尾 hol | 高（0.6s 一拍三通道齐跳，� | 三通道节拍器——深色场形容词列表逐拍上移一行，视口中央固定胶
+rhythm/panel-grid-moves.md | panel-grid-moves | 156f ≈5.2s（全屏侧拍 20f + 三刀分格 | 中高 | 分格节奏——comic-panel-split 漫画斜格劈出同一主体的三个机位，咔咔
+rhythm/quad-split-parallel-scenes.md | quad-split-parallel-scenes | 90f（3s@30fps：0–62f 并行轰炸 + 28f � | 高（四线并行 + 错拍冲击， | 画面硬切 2×2 四宫格，四个象限并行跑各自的微场景（打字、急推、
+rhythm/rhythm-interrupt-moves.md | rhythm-interrupt-moves | A 135f ≈4.5s | A 中 | 打断节奏——jump-cut-punch-in 三级跳切推近：同构图三次无补间硬跳放
+rhythm/sakuga-timing-shift.md | sakuga-timing-shift | 150f（5s） | 中高 | 一拍三转一拍一——元素先以每 3 帧一步的手翻书顿挫移动，高潮瞬
+rhythm/speed-ramp-freeze.md | speed-ramp-freeze | 定格标注全程 158f（≈5.3s，定格段  | 中高（速度反差本身即energy | 帧号非线性 remap 的节奏手法——定格标注（流动→定格圈注→解冻�
+rhythm/trailer-grammar-moves.md | trailer-grammar-moves | A ~4.7s（140f） | A 高 | 预告片语法一式——trailer-bumper 前置速剪钩子：三镜 9f 速剪 + 黑场�
+transition/bottom-push-stack-wipe.md | bottom-push-stack-wipe | demo 三连推 170f（~5.7s）；单次推入  | 中 | 底边上推换章——新场景连底色整屏从底边向上推入，把旧场景物理
+transition/card-flip-reveal.md | card-flip-reveal | 全程 150f（~5s，含 hold）；单卡 4f � | 中高 | 功能卡 3D 翻面揭示——卡片沿 Y 轴翻 180°，正面 UI 翻到侧棱最薄处�
+transition/card-flock-tumble.md | card-flock-tumble | 翻飞 ~1.5s + 慢转展示 ~0.3s + 收束 0.3 | 极高（全片能量顶点用） | 三张 UI 页卡从侧棱薄边 3D 翻飞成阶梯站定（全程清晰、样条连续丝�
+transition/circle-match-iris.md | circle-match-iris | 5.5s / 165f（入场+定睛 40f + 蓄力 7f +  | 中高 | 圆心匹配光圈切——光圈从页面上圆形元素的圆心炸开，圈内新页的
+transition/gradient-transition.md | gradient-transition | 约 6.7s（200f@30fps；linear 0–2.3s · rad | 低（纯背景运动，为前景内 | 背景在 linear、radial、conic 三类 CSS 渐变间平滑过渡——角度、色标、
+transition/line-carry-transition.md | line-carry-transition | ~6.3s / 190f（进度条走满 36f + 冲出 10 | 中 | 线条接力横移转场——场景 A 的进度条延伸出画，镜头跟线横移，线
+transition/mosaic-reframe.md | mosaic-reframe | 约 7.1s（214f@30fps；浮现 0–22f · hold | 中（连续流动的重排，无爆 | 12 张瓦片在规则网格、feature mosaic、对角瀑布串三种排版间连续变形�
+transition/page-turn-transitions.md | page-turn-transitions | 单式 150f（前态建立 30–40f + 转场 2 | 中高 | 整页体块转场——barn-door-split 对开门裂幕（旧页裂两半滑出、新页�
+transition/print-texture-transitions.md | print-texture-transitions | 4–4.5s（洇开段 55–80f + 静止收尾 � | 中（渐进显形，无冲击拍） | 印刷质感转场——ink-bleed-reveal 墨渗揭示（须状渗边洇开吃掉旧景）
+transition/shot-transitions.md | shot-transitions | n/a（技法卡；各式占用帧数见参数� | n/a（技法卡，不占能量位） | 镜头交棒三式——推进流白、whip-pan 甩镜（急刹款）、mask-wipe 穿窗�
+transition/tear-streak-transitions.md | tear-streak-transitions | 前态 ≥40f + 撕裂 16–24f + 收尾 ≥40 | 高 | 撕裂转场——glitch-displace 噪声撕裂（16 横条错位抖动中硬切），数�
+transition/transition-hidden-cut.md | transition-hidden-cut | n/a（技法卡；各式占用帧数见参数� | n/a（技法卡，不占能量位） | 藏切点转场三式——前景遮挡隐形切、对撞开屏、暖色漏光，硬切藏
+transition/transition-travel.md | transition-travel | n/a（技法卡；demo 150f，主推动作段  | n/a（技法卡，不占能量位） | 穿越式转场——字腔穿越：巨型章节标题的字形就是一扇窗，镜头钻
+transition/white-flash-logo-simplify-cut.md | white-flash-logo-simplify-cut | 约 4s（120f@30fps；演出 0–34f · 蓄力 | 中高（一次脉冲式重音，前 | 液态金属质感的彩色词标静置流光，蓄力后从字心炸出一记白闪过曝
+transition/wipe-transitions.md | wipe-transitions | 前态 ≥20f + 擦除 ~56f + 收尾 ≥40f， | 中 | 几何擦除转场——blinds-slice 百叶窗切条（12 根 3D 叶片错峰翻面成波�
+typography/blur-slide.md | blur-slide | 约 4.0s（120f@30fps） | 低（一次性收敛，无峰值无 | 标题逐词入场，y 0.38em→0 + blur 18→0 + opacity 0→1 三通道走同一条 ease
+typography/brace-expand.md | brace-expand | 约 4s（120f@30fps：光标 0–6f → 6f 小 | 中（单次过冲是唯一峰值， | 一对紧贴的小花括号先在正中出现，随即带一次过冲向左右弹开并放
+typography/countdown-arc-scatter.md | countdown-arc-scatter | 约 3.3s（100f@30fps：扫动 ~30f + 落位 2 | 高（96° 大幅扫动压进 ~20 � | 纸面表盘 9 个等大数字沿大弧切向排布，整盘扫过 96° 后减速急停，
+typography/document-typewriter-reveal.md | document-typewriter-reveal | 150f（约 5s，含 history-list-stack 尾段� | 低中（信息密度最高，节奏 | 悬浮在暗场里的整页真排版文档窗口在光标后自己"写"出来、侧栏跟�
+typography/flying-words.md | flying-words | 约 6.0s（180f@30fps，2 个完整循环，� | 高（全屏持续 3D 位移，画� | 22 个关键词按黄金角铺在扁椭圆截面上，沿 z 轴从远处飞到相机前擦
+typography/glitch-cycle.md | glitch-cycle | 约 5.6s（168f@30fps；demo 每条短语 38f� | 中高（持续的高频噪声脉冲 | 同一行等宽槽位循环轮播 4 条状态短语，每条头尾按概率关键帧 [1,0,
+typography/gradient-word-sweep.md | gradient-word-sweep | 扫充 ~15–20f（要快）+ 稳态闪电呼� | 高（一词爆点，前后都该让 | 黑底标语里关键词被渐变彩光从左到右快速扫过"充能"——波前字符�
+typography/lead-word-zoom-assemble.md | lead-word-zoom-assemble | 约 2.8s（84f@30fps；组句 f36 完成、上 | 中高（起手就是满画面的大 | 首词以 2.3 倍字号占据画面中央、hold 期间继续推近 6%，随后一条曲�
+typography/marker-underline-title.md | marker-underline-title | 标题落定 +4~8f 后起笔，划线 8–12f� | 低（一笔点睛，不抢标题的 | 大标题落定后，关键词下方马克笔下划线从左到右快速描画——变宽
+typography/outline-word-fill.md | outline-word-fill | 约 3.0s（90f@30fps，短促单拍 + 36f 落� | 高（3.2 倍收缩 + 瞬时点亮� | 空心词（细暖灰描边、500 字重）从 3.2 倍急缓收缩落位，虚线大圆随
+typography/paper-title-card.md | paper-title-card | 1.7–1.8s（50–55f） | 低（呼吸位，隔开两段高能 | 一句话逐词压印上纸、一个词标强调色斜体、短划线收束
+typography/pill-chip-slot-cycle-handled.md | pill-chip-slot-cycle-handled | 约 5.0s（150f@30fps：静置 → 3 次切换 | 中（三拍稳定节拍，宽度伸 | 白底句式 "Your `chip` Handled" 里深色胶囊内词竖向滚轮轮换，胶囊宽度�
+typography/pill-slot-cycle.md | pill-slot-cycle | 入场 12f + 每拍 21f × 词数 + 收束 14f | 中（稳定节拍器，无峰值） | 句中词槽轮换——固定句干钉死不动，句尾 pill 徽章每 ~0.7s 老虎机�
+typography/text-column-converge.md | text-column-converge | 轮换 7–16f/词 × 8–9 词 + 合拢 ~36f  | 中低（机器节奏、小字规格 | 双词对峙合拢——左"NEW"右特性词钉死在等屏边距两侧硬切轮换、全�
+typography/title-demote-to-label.md | title-demote-to-label | A ~3.7s（112f）/ B ~4.5s（134f）；demo � | 低中（版式变换型，氛围镜 | 大标题降格为节标签两式——A 大标题居中显影站稳一拍后连续缩小 
+typography/type-assembly-moves.md | type-assembly-moves | 单式 4–5.5s（动作段 A ~56f / B ~104f / | A 中 / B 中高 / C 中 | 文字集结三式——split-text-stagger 逐字裂升、letterform-drift-assembly 漂移
+typography/type-entrance-moves.md | type-entrance-moves | 单式 5s（含 hold 与静止收尾；动作� | 中高（物理趣味） | 标题文字入场一式——letter-drop-physics 字符坠落（重力砸落、弹跳、�
+typography/type-rhythm-sync.md | type-rhythm-sync | A FontWeightPump 165f / B KaraokeFillSync 150f | A 高（蹦迪感）/ B 中（跟读 | 文字随声同步两式——font-weight-pump 字重脉冲（笔画随鼓点变粗弹回�
+typography/typewriter-moves.md | typewriter-moves | ~5.3s（160f） | 中低 | 打字机 error-retype——误删重打的"改口"三幕剧：打出平庸词 → 犹豫 
+typography/vertical-word-roll-blur-cycle.md | vertical-word-roll-blur-cycle | 约 5.0s（150f@30fps：静置 → 3 次换词 | 中（稳定三拍，无峰值） | 句尾词换成竖向滚轮，3 次换词各 0.55s（outQuint 七成 + outBack 三成，�
+typography/word-relay-filmstrip.md | word-relay-filmstrip | 每词期 ~1.5–2s × 3–4 词；demo 180f� | 中低（编辑部气质，节奏靠 | 左列黑白相间等高页面卡步进滚动（焦点卡全亮、邻卡离焦压暗）、
+typography/word-relay-geometry.md | word-relay-geometry | 约 6.0s（180f@30fps：三段各 ≈60f，段 | 中高（三拍推进 + 全程几何 | 三个利益词各带一套专属几何接力——虚线大圆减速自转 + 彗星弧飞
+ui-entrance/avatar-bracket-carousel.md | avatar-bracket-carousel | 约 5.2s（156f@30fps） | 中（三次等距切换构成稳定 | "Your ___ agent" 填空排版，四角对焦框钉在句中不动，头像队列在框内�
+ui-entrance/bezier-source-converge-merge.md | bezier-source-converge-merge | 约 5.6s（168f@30fps） | 中（长镜慢速推进，靠数据 | 左侧四个来源节点各有一条细贝塞尔曲线连向右侧同一汇聚点，曲线
+ui-entrance/card-stack.md | card-stack | 约 5.0s（150f@30fps） | 中高（入场是连续小爆发， | 一组模板卡（demo 9 张）从屏幕下方逐张 spring 弹入、越落越快叠成一
+ui-entrance/carousel-3d.md | carousel-3d | 约 5.6s（168f@30fps） | 中（可无限循环的稳态运动 | 8 张卡排成圆环整环自转一圈（匀速底 + 每 45° 一次停靠的分步），�
+ui-entrance/cloner-depth-echo.md | cloner-depth-echo | 138f（约 4.6s） | 中（陈列-收束型） | 克隆纵队——主卡瞬间"复印"出 7 个半透明分身沿斜向纵深排开成队�
+ui-entrance/deck-deal-flyin.md | deck-deal-flyin | 150f（约 5s：0–36 牌堆特写 + 预备� | 高（节奏爬升段主力，不放 | 暗色石墨桌面上的实体牌堆特写环绕开局，灯从牌堆亮到旁边的页面
+ui-entrance/doc-park-left-pill-deal.md | doc-park-left-pill-deal | 约 5.8s（174f@30fps） | 低（慢发牌节奏，全片无峰 | 文档不淡出而是向左滑出只露约 35% 宽并微缩到 0.92，右侧按旁白节�
+ui-entrance/draw-svg-trace.md | draw-svg-trace | 132f（预告 10f + 描边 40f + 闪黑交棒  | 中 | 描边生长圈注——一条带笔头的墨线沿元素轮廓跑一圈把它"画"出来�
+ui-entrance/element-body-moves.md | element-body-moves | A 150f 5s | A 低中 | 元素身体感——contact-shadow-lift 接触阴影离面抬升：卡抬起时桌上的�
+ui-entrance/integration-hub-map.md | integration-hub-map | 前摇 ~0.5s + 快翻 ~1.2s + 图标齐现 → | 中高（翻面是爆点，输送段 | 旧页面一次性快翻 180°（侧棱瞬间亮闪）落成新中枢页，五个集成 ap
+ui-entrance/list-reveal.md | list-reveal | 约 4s（120f@30fps） | 低（稳定节拍，无峰值；靠 | 垂直菜单 6 项按 10f 的间隔依次 scale 找位、软 back 轻微过冲落定，同
+ui-entrance/list-stack-press.md | list-stack-press | 约 3s（18–88f） | 中 | 列表卡从画面底部逐张飞上摞起，每张落地压弹整摞、计数器同步跳
+ui-entrance/neon-frame-forerun.md | neon-frame-forerun | 框奔画 ~0.7s + 点亮&贴落 ~2.7s + 背景 | 中高（三层动作叠进，但都 | 强透视直角霓虹框自左缘两头奔画先行成型，页面在框内由暗转亮，
+ui-entrance/neon-frame-orbit-drop.md | neon-frame-orbit-drop | 描框 ~0.5s + 旋转&同时贴落 ~2.5s + 落 | 中高（一次性的大动作，落 | 霓虹框先行描框后，镜头绕页面左→右弧线旋转，页面全部组件/文�
+ui-entrance/page-waterfall-wall.md | page-waterfall-wall | 4–6s（无限循环体，时长由段落需� | 中（流动陈列型） | 页面瀑布墙——真实页面截图切成 3–4 列在 3D 后仰墙面上差速反向�
+ui-entrance/product-card-progressive-assemble.md | product-card-progressive-assemble | 约 5.7s（172f@30fps） | 中（连续小事件密集排布， | 详情卡像被逐字段抓取般自建——一枚"填充光标"领先跳格，图→标�
+ui-entrance/radial-wave.md | radial-wave | 约 3.8s（114f@30fps） | 中高（起手爆发一次，波前 | 17×9 圆点阵列按到波源的欧氏距离错峰点亮，每点 scale 过冲到 1.5 再
+ui-entrance/research-card-stack-scroll.md | research-card-stack-scroll | 约 4.8s（144f@30fps） | 中高（匀速高频，无爆发但 | 深色论文卡每 12 帧一张沿右下轴线飞入中心叠压，落位带 1 帧压缩�
+ui-entrance/row-embed.md | row-embed | 约 2s（12–68f） | 中 | 内容行像卡片一样从空中降下、rotateX 收平、嵌入瞬间底边亮一道强�
+ui-entrance/value-stagger-gradient.md | value-stagger-gradient | 约 5.0s（150f@30fps） | 中高（第一拍是连续铺开， | 16 根柱入场时 delay 是时间错峰，同时高度/色相/位移/模糊四个属性�
+ui-entrance/wall-reveal-moves.md | wall-reveal-moves | 单式约 5s（A 150f / B 150f @30fps，含建 | 中 | 整墙批量入场两式——bento 逐格点亮、蓝图描线成形，全部原位显形

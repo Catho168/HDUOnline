@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-11-20T21:55:33.430Z",
+  "wasmBytes": 28358879,
+  "entries": {
+    "asr-worker.js": 1068512,
+    "background.js": 216353,
+    "content-scripts/bilibili.js": 483426,
+    "content-scripts/content.js": 684836,
+    "dashboard.html": 347440,
+    "offscreen.html": 49292,
+    "options.html": 343484,
+    "popup.html": 298948
+  }
+}

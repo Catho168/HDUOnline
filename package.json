@@ -1,0 +1,55 @@
+{
+  "name": "hdu-smart-classroom-assistant",
+  "private": true,
+  "version": "1.1.0",
+  "description": "杭电智慧课堂线上学习助手 — Chromium MV3 浏览器扩展",
+  "type": "module",
+  "license": "SEE LICENSE IN README.md",
+  "scripts": {
+    "postinstall": "wxt prepare && node scripts/copy-wasm.mjs && node scripts/make-icons.mjs",
+    "predev": "node scripts/copy-wasm.mjs && node scripts/make-icons.mjs",
+    "dev": "vite --host 0.0.0.0 --port 3000",
+    "dev:ext": "wxt",
+    "prebuild": "node scripts/copy-wasm.mjs && node scripts/make-icons.mjs",
+    "build": "vite build",
+    "build:ext": "wxt build",
+    "zip": "wxt zip",
+    "compile": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify": "npm run compile && npm run test && node scripts/audit-external-links.mjs && npm run build",
+    "e2e:build": "wxt build --mode development",
+    "e2e": "node scripts/e2e-smoke.mjs",
+    "verify:e2e": "npm run compile && npm run e2e:build && npm run e2e",
+    "inventory": "node scripts/gen-inventory.mjs",
+    "size-check": "node scripts/size-check.mjs"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.8.1",
+    "fflate": "^0.8.3",
+    "idb": "^8.0.4",
+    "mp4box": "^2.4.1",
+    "onnxruntime-web": "1.30.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "overrides": {
+    "onnxruntime-web": "1.30.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.3.5",
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^6.3.0",
+    "@wxt-dev/module-react": "^1.2.2",
+    "fake-indexeddb": "^6.2.5",
+    "jsdom": "^26.0.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.8",
+    "vitest": "^3.2.7",
+    "wxt": "^0.21.4"
+  }
+}

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>HDUOnline styleframe · 纸面课堂</title>
+<style>
+  :root{
+    --paper:#f5f1e8; --paper-2:#fffdf8; --paper-3:#eee8db;
+    --ink:#171a1d; --ink-soft:#5c5850; --muted:#8c877c;
+    --accent:#a4551b; --accent-2:#dfa05a; --accent-soft:#f1e2cc;
+    --line:#e2d9c8; --line-strong:#cfc3ad;
+    --red:#f08a82;
+    --serif:"Noto Serif SC","Source Han Serif SC","Songti SC","SimSun",Georgia,serif;
+    --sans:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;
+    --mono:"SFMono-Regular","Cascadia Code",Consolas,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#d8d2c4;font-family:var(--sans);color:var(--ink);}
+  .frame{width:1920px;height:1080px;position:relative;overflow:hidden;background:var(--paper);margin:0 auto 40px;}
+  .frame::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background-image:radial-gradient(rgba(23,26,29,.045) 1px,transparent 1px);background-size:5px 5px;}
+  .grain{position:absolute;inset:0;pointer-events:none;opacity:.35;mix-blend-mode:multiply;
+    background:
+      linear-gradient(105deg,transparent 42%,rgba(164,85,27,.035) 50%,transparent 58%),
+      linear-gradient(0deg,rgba(23,26,29,.02),transparent 30%);}
+
+  /* ============ Frame A · 开场 hook ============ */
+  .a-chrome{position:absolute;left:120px;top:110px;width:820px;height:520px;border:2px solid var(--line-strong);
+    border-radius:18px;background:var(--paper-2);box-shadow:0 24px 60px rgba(34,20,8,.10);overflow:hidden;transform:rotate(-.6deg);}
+  .a-chrome .bar{height:44px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;padding:0 18px;}
+  .a-chrome .dot{width:11px;height:11px;border-radius:50%;background:var(--line-strong);}
+  .a-chrome .dot:nth-child(2){background:var(--accent-2);} .a-chrome .dot:nth-child(3){background:var(--accent);}
+  .a-chrome .addr{margin-left:14px;flex:1;height:26px;border-radius:13px;background:var(--paper-3);
+    font-family:var(--mono);font-size:13px;line-height:26px;color:var(--muted);padding:0 14px;}
+  .a-chrome .ghost{margin:34px 40px 0;height:18px;border-radius:9px;background:var(--paper-3);}
+  .a-chrome .ghost.w60{width:60%;} .a-chrome .ghost.w85{width:85%;margin-top:16px;}
+  .a-chrome .ghost.w40{width:40%;margin-top:16px;}
+  .a-chrome .block{margin:30px 40px 0;height:150px;border-radius:12px;background:linear-gradient(135deg,var(--paper-3),var(--line));}
+  .a-stamp{position:absolute;left:830px;top:300px;width:168px;height:168px;border-radius:28px;background:var(--accent);
+    color:#fff8ee;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:92px;font-weight:700;
+    box-shadow:0 18px 44px rgba(164,85,27,.35);transform:rotate(-4deg);}
+  .a-stamp::after{content:"";position:absolute;inset:9px;border:2px solid rgba(255,248,238,.55);border-radius:20px;}
+  .a-title{position:absolute;left:120px;top:660px;font-family:var(--serif);font-weight:700;font-size:108px;line-height:1.22;letter-spacing:.02em;}
+  .a-title em{font-style:normal;color:var(--accent);}
+  .a-sub{position:absolute;left:126px;top:952px;font-size:30px;color:var(--ink-soft);letter-spacing:.14em;}
+  .a-sub b{color:var(--accent);font-weight:600;}
+  .a-tick{position:absolute;right:120px;top:130px;text-align:right;font-family:var(--mono);font-size:20px;color:var(--muted);line-height:2;}
+  .a-tick .on{color:var(--accent);font-weight:700;}
+
+  /* ============ Frame B · 播放页本节助手 ============ */
+  .b-head{position:absolute;left:0;top:0;right:0;height:96px;display:flex;align-items:center;padding:0 120px;gap:16px;
+    border-bottom:1px solid var(--line);background:rgba(255,253,248,.7);}
+  .b-logo{width:52px;height:52px;border-radius:14px;background:var(--ink);color:var(--paper);display:flex;align-items:center;
+    justify-content:center;font-family:var(--serif);font-size:30px;font-weight:700;}
+  .b-name{font-family:var(--serif);font-size:30px;font-weight:700;letter-spacing:.04em;}
+  .b-crumb{margin-left:auto;font-family:var(--mono);font-size:19px;color:var(--muted);}
+  .b-crumb b{color:var(--accent);}
+  .b-player{position:absolute;left:120px;top:170px;width:1010px;height:640px;border-radius:20px;background:#201d18;overflow:hidden;
+    box-shadow:0 30px 70px rgba(34,20,8,.22);}
+  .b-player .scene{position:absolute;inset:0;background:
+    radial-gradient(1200px 500px at 30% 20%,#3a342a,transparent 60%),
+    radial-gradient(900px 420px at 75% 80%,#2c2820,transparent 55%),#26221b;}
+  .b-player .board{position:absolute;left:90px;top:110px;width:760px;height:330px;background:rgba(255,253,248,.96);border-radius:10px;
+    padding:34px 40px;font-family:var(--serif);transform:rotate(.4deg);box-shadow:0 12px 34px rgba(0,0,0,.28);}
+  .b-player .board h3{font-size:34px;margin-bottom:18px;letter-spacing:.03em;}
+  .b-player .board p{font-size:24px;line-height:1.9;color:#3c3a33;}
+  .b-player .board .u{border-bottom:3px solid var(--accent-2);}
+  .b-sub{position:absolute;left:50%;transform:translateX(-50%);bottom:96px;background:rgba(15,13,10,.82);color:#f5efdf;
+    font-size:30px;padding:16px 34px;border-radius:12px;letter-spacing:.05em;white-space:nowrap;}
+  .b-sub b{color:var(--accent-2);font-weight:600;}
+  .b-track{position:absolute;left:40px;right:40px;bottom:34px;height:10px;border-radius:5px;background:rgba(255,253,248,.22);}
+  .b-track .fill{position:absolute;left:0;top:0;bottom:0;width:38%;border-radius:5px;background:var(--accent-2);}
+  .b-track .mark{position:absolute;top:-7px;width:24px;height:24px;border-radius:7px;background:var(--accent);border:3px solid #fff8ee;}
+  .b-panel{position:absolute;left:1180px;top:170px;width:620px;height:640px;border-radius:20px;background:var(--paper-2);
+    border:1px solid var(--line);box-shadow:0 30px 70px rgba(34,20,8,.12);padding:30px 34px;}
+  .b-tabs{display:flex;gap:10px;border-bottom:1px solid var(--line);padding-bottom:16px;}
+  .b-tab{font-size:22px;color:var(--muted);padding:8px 18px;border-radius:10px;}
+  .b-tab.on{background:var(--ink);color:var(--paper);font-weight:600;}
+  .b-kp{margin-top:22px;border:1px solid var(--line);border-left:6px solid var(--accent);border-radius:12px;padding:18px 22px;background:var(--paper);}
+  .b-kp h4{font-family:var(--serif);font-size:27px;letter-spacing:.02em;}
+  .b-kp h4 span{float:right;font-family:var(--mono);font-size:18px;color:var(--accent);font-weight:400;}
+  .b-kp p{margin-top:8px;font-size:20px;line-height:1.7;color:var(--ink-soft);}
+  .b-kp.k2{border-left-color:var(--accent-2);}
+  .b-kp.k3{border-left-color:var(--red);}
+  .b-note{position:absolute;left:1300px;top:840px;width:500px;background:var(--accent-soft);border:1px solid var(--line-strong);
+    border-radius:14px;padding:18px 24px;transform:rotate(1.2deg);box-shadow:0 16px 40px rgba(34,20,8,.12);}
+  .b-note .t{font-family:var(--mono);font-size:17px;color:var(--accent);font-weight:700;}
+  .b-note p{margin-top:6px;font-size:21px;line-height:1.6;}
+  .b-cap{position:absolute;left:120px;bottom:60px;font-size:34px;letter-spacing:.12em;color:var(--ink-soft);}
+  .b-cap b{color:var(--ink);font-weight:600;}
+  .b-cap .dot{color:var(--accent);}
+
+  /* ============ Frame C · 结尾字标 ============ */
+  .c-wrap{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px;}
+  .c-stamp{width:150px;height:150px;border-radius:26px;background:var(--accent);color:#fff8ee;display:flex;align-items:center;
+    justify-content:center;font-family:var(--serif);font-size:82px;font-weight:700;box-shadow:0 18px 44px rgba(164,85,27,.32);
+    transform:rotate(-3deg);position:relative;}
+  .c-stamp::after{content:"";position:absolute;inset:8px;border:2px solid rgba(255,248,238,.55);border-radius:18px;}
+  .c-word{font-family:var(--serif);font-size:96px;font-weight:700;letter-spacing:.06em;}
+  .c-word span{color:var(--accent);}
+  .c-tag{font-size:32px;color:var(--ink-soft);letter-spacing:.22em;}
+  .c-meta{font-family:var(--mono);font-size:20px;color:var(--muted);letter-spacing:.1em;margin-top:8px;}
+  .c-rule{width:520px;height:2px;background:linear-gradient(90deg,transparent,var(--line-strong),transparent);}
+</style>
+</head>
+<body>
+
+<!-- Frame A · 开场：站点页面 → 学印章落下 → 学习中心 -->
+<section class="frame" id="A">
+  <div class="grain"></div>
+  <div class="a-chrome">
+    <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <div class="addr">course.hdu.edu.cn/#/home</div></div>
+    <div class="ghost w60"></div><div class="ghost w85"></div><div class="block"></div><div class="ghost w40"></div>
+  </div>
+  <div class="a-stamp">学</div>
+  <div class="a-tick">LOCAL ASR · WEBGPU<br>AI NOTES · <span class="on">ON-DEVICE</span><br>CHROME MV3</div>
+  <h1 class="a-title">把<em>课堂</em>留下，<br>把<em>进度</em>握在手里。</h1>
+  <div class="a-sub">HDUONLINE 智慧课堂学习助手 —— <b>本地转写</b> × <b>AI 标注</b> × <b>学习统计</b></div>
+</section>
+
+<!-- Frame B · 中段：播放页本节助手（字幕 / 标注 / 问答 / 笔记） -->
+<section class="frame" id="B">
+  <div class="grain"></div>
+  <div class="b-head">
+    <div class="b-logo">学</div><div class="b-name">智慧课堂</div>
+    <div class="b-crumb">线性代数（模拟课程）· 第12讲 · <b>47:00</b></div>
+  </div>
+  <div class="b-player">
+    <div class="scene">
+      <div class="board">
+        <h3>3.2 矩阵乘法</h3>
+        <p>设 A 是 m×n 矩阵，B 是 n×p 矩阵，<br>则 <span class="u">C = AB</span> 的第 i 行第 j 列元素为……</p>
+      </div>
+    </div>
+    <div class="b-sub">字幕 · <b>矩阵乘法不满足交换律</b></div>
+    <div class="b-track"><div class="fill"></div><div class="mark" style="left:12%"></div><div class="mark" style="left:38%"></div><div class="mark" style="left:71%"></div></div>
+  </div>
+  <div class="b-panel">
+    <div class="b-tabs"><div class="b-tab on">速览</div><div class="b-tab">标注</div><div class="b-tab">大纲</div><div class="b-tab">问答</div><div class="b-tab">笔记</div></div>
+    <div class="b-kp"><h4>矩阵乘法 <span>06:12 – 14:40</span></h4><p>定义、可乘条件与运算性质；不满足交换律的反例。</p></div>
+    <div class="b-kp k2"><h4>转置与逆矩阵 <span>15:02 – 28:30</span></h4><p>(AB)ᵀ = BᵀAᵀ；可逆矩阵的判定条件。</p></div>
+    <div class="b-kp k3"><h4>特征值初步 <span>31:20 – 45:00</span></h4><p>特征方程 |A−λE|=0 的几何直观。</p></div>
+  </div>
+  <div class="b-note"><div class="t">NOTE · 12:46</div><p>交换律反例要记住：AB ≠ BA，考试常考。</p></div>
+  <div class="b-cap">本节助手 · <b>字幕 / 标注 / 大纲 / 问答 / 笔记 / 收藏</b> <span class="dot">●</span> 全部落在播放位置上</div>
+</section>
+
+<!-- Frame C · 结尾字标 -->
+<section class="frame" id="C">
+  <div class="grain"></div>
+  <div class="c-wrap">
+    <div class="c-stamp">学</div>
+    <div class="c-word">HDU<span>Online</span></div>
+    <div class="c-rule"></div>
+    <div class="c-tag">把课堂留下，把进度握在手里。</div>
+    <div class="c-meta">数据只在本机 · 本地转写 · AI 标注 · 学习统计</div>
+  </div>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!doctype html>
+<!--
+  B 站视频页 fixture（e2e 专用；静态自包含，不含任何真实 B 站资源与数据）。
+
+  由 scripts/e2e-smoke.mjs 经 CDP Fetch 域拦截 https://www.bilibili.com/video/* 后
+  原地应答（请求不出浏览器，无需真实网络/TLS 证书）。B 站内容脚本按官方 URL 匹配
+  注入，本页只需提供 extractBiliVideoInfo / 播放器跟随所需的最小 DOM：
+    - URL 路径 /video/BV…（由打开页面的 URL 决定，不在本文件内）；
+    - og:title / h1.video-title：视频标题；
+    - .up-name：UP 主；.video-duration：DOM 时长文本（备用）；
+    - <video>：播放器元素（收藏此时刻 / 字幕高亮 / 时间轴标记都跟随它）。
+
+  媒体时长伪装：离线环境没有真实媒体文件，<video>.duration 恒为 NaN，会让时间轴
+  标记（需要 duration>0 换算百分比）不渲染。这里把 HTMLMediaElement.prototype 的
+  duration getter 伪装成固定 600s；currentTime 保持默认 0（未播放，收藏此时刻按
+  00:00 断言，结果确定）。该伪装只影响本页面的 JS 环境，不污染其他 fixture 页。
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta property="og:title" content="线性代数公开课（E2E 模拟）">
+  <meta property="og:description" content="e2e 冒烟用的 B 站视频页模拟，不含真实内容">
+  <title>线性代数公开课（E2E 模拟）_哔哩哔哩_e2e</title>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #fff; }
+    .video-wrap { position: relative; width: 640px; height: 360px; background: #000; }
+    video { width: 100%; height: 100%; display: block; }
+  </style>
+</head>
+<body>
+  <h1 class="video-title">线性代数公开课（E2E 模拟）</h1>
+  <div><span class="up-name">E2E 讲师</span> · <span class="video-duration">10:00</span></div>
+  <div class="video-wrap">
+    <video controls preload="none"></video>
+  </div>
+  <script>
+    // 伪装媒体时长（见文件头注释）：内容脚本读 video.duration 作为时间轴标记换算基准
+    Object.defineProperty(HTMLMediaElement.prototype, 'duration', {
+      configurable: true,
+      get() { return 600; },
+    });
+  </script>
+</body>
+</html>

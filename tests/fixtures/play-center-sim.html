@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>智慧课堂"学习中心"播放页模拟器 · play-center-sim</title>
+    <style>
+      /* 复刻站点新版播放页（#/play-center）关键结构与类名，仅供本地 E2E/单测，不含任何站点私有资源 */
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f5f6f8; color: #1f2329; }
+      .play-header { display: flex; align-items: center; gap: 16px; padding: 12px 20px; background: #fff; border-bottom: 1px solid #e3e5e9; }
+      .play-header .title { font-weight: 700; }
+      .play-header .meta { color: #646a73; font-size: 13px; }
+      .layout { display: flex; gap: 16px; padding: 16px 20px; align-items: flex-start; }
+      .play-video { flex: 1; min-width: 0; }
+      .play-video-main-container { background: #000; border-radius: 10px; overflow: hidden; }
+      .left-module-wrapper { position: relative; }
+      .player-wrapper { position: relative; }
+      .player-wrapper video { width: 100%; display: block; background: #000; aspect-ratio: 16 / 9; }
+      .player-caption { position: absolute; left: 50%; transform: translateX(-50%); bottom: 90px; color: #fff; background: rgba(0,0,0,.6); padding: 6px 12px; border-radius: 6px; font-size: 16px; display: none; }
+      .kmd-control-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #16181d; }
+      .jy-control-progress { flex: 1; height: 8px; background: #3a3f47; border-radius: 4px; position: relative; cursor: pointer; }
+      .jy-control-progress > .buffered { position: absolute; inset: 0 auto 0 0; width: 0; background: #565d68; border-radius: 4px; }
+      .jy-control-progress > .played { position: absolute; inset: 0 auto 0 0; width: 0; background: #2b6cff; border-radius: 4px; }
+      .kmd-btn { background: transparent; border: 1px solid #3a3f47; color: #e8eaed; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 13px; }
+      .second-player-container { display: flex; gap: 10px; margin-top: 10px; }
+      .second-player-container video { width: 33%; border-radius: 8px; background: #111; aspect-ratio: 16 / 9; }
+      .right-body { width: 380px; background: #fff; border: 1px solid #e3e5e9; border-radius: 10px; }
+      .right-body .head { padding: 12px 14px; font-size: 13px; color: #646a73; border-bottom: 1px solid #e3e5e9; }
+      .body-content { max-height: 460px; overflow: auto; padding: 6px 0; }
+      .body-item { display: flex; gap: 10px; align-items: center; padding: 10px 14px; cursor: pointer; font-size: 13px; border-left: 3px solid transparent; }
+      .body-item:hover { background: #f5f6f8; }
+      .body-item.active { background: rgba(43,108,255,.08); border-left-color: #2b6cff; }
+      .body-item .idx { color: #8f959e; font-variant-numeric: tabular-nums; }
+      .body-item .main { flex: 1; min-width: 0; }
+      .body-item .name { font-weight: 600; }
+      .body-item .time { color: #646a73; font-size: 12px; margin-top: 2px; }
+      .body-item .state { font-size: 11px; border: 1px solid #e3e5e9; border-radius: 999px; padding: 1px 7px; color: #8f959e; }
+      .body-item .state.done { color: #12805c; border-color: rgba(18,128,92,.35); }
+      .hint { max-width: 980px; margin: 12px auto 40px; padding: 12px 16px; background: #fff; border: 1px solid #e3e5e9; border-radius: 10px; font-size: 13px; color: #646a73; }
+      code { background: #f5f6f8; padding: 1px 4px; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <!--
+      play-center-sim.html —— 站点新版播放页（#/play-center）模拟器
+
+      为什么需要它：新版播放页 URL **不含课次 ID**（只有 teclId / teclCode / subjId / target），
+      课次只能在页面右栏列表里切换。课次识别因此必须依赖"页面线索 + 站点读接口 + 播放地址"，
+      这个页面就是验证这条链路的最小载体。
+
+      关键约定：
+        1) 主画面地址只带 `?view=N`，**不含 courseId/CloudIPC**，避免绕过页面选中项；
+        2) 右栏 `.body-item.active` 的 `.time` 文本必须能被 `parseDatetimeMs` 解析；
+        3) serve.mjs 的 `/v1/subject_vod_list_new` 返回的 courBeginTime 与选中项时间一致。
+
+      用法：
+        node tests/fixtures/serve.mjs
+        http://127.0.0.1:8788/play-center-sim.html#/play-center?teclId=9001&teclCode=TECL-9001&subjId=1573&target=video
+
+      注意：本文件不含任何真实课程数据与凭据（占位值与 serve.mjs 的 MOCK 一致）。
+    -->
+    <div class="play-header">
+      <span class="title" id="course-title">线性代数（模拟课程）</span>
+      <span class="meta">模拟教师</span>
+      <span class="meta" id="cour-range">2026-10-12 18:00~18:47</span>
+      <span class="meta">共 <span id="play-count">3</span> 次播放</span>
+    </div>
+
+    <div class="play-center layout">
+      <div class="play-video">
+        <div class="play-video-main-container">
+          <div class="left-module-wrapper">
+            <div class="player-wrapper">
+              <!-- 主画面：地址不含课次信息（识别链应走右栏选中项） -->
+              <video id="primary" controls playsinline preload="metadata"
+                     src="sample.mp4?view=1"></video>
+              <div class="player-caption"></div>
+            </div>
+          </div>
+          <div class="kmd-control-bar">
+            <button class="kmd-btn" id="btn-toggle" type="button">播放/暂停</button>
+            <button class="kmd-btn" id="btn-rate" type="button">倍速 1×</button>
+            <div class="jy-control-progress" id="progress">
+              <div class="buffered"></div>
+              <div class="played"></div>
+            </div>
+            <span class="kmd-btn" id="clock" style="border: none">00:00 / 00:00</span>
+          </div>
+        </div>
+        <!-- 副画面（多机位：站点实测 3 路） -->
+        <div class="second-player-container">
+          <video id="v2" muted playsinline preload="metadata" src="sample.mp4?view=2"></video>
+          <video id="v3" muted playsinline preload="metadata" src="sample.mp4?view=3"></video>
+        </div>
+      </div>
+
+      <aside class="right-body">
+        <div class="head">共 3 个课次</div>
+        <div class="body-content" id="session-list">
+          <div class="body-item">
+            <span class="idx">01</span>
+            <span class="main">
+              <div class="name">第4周 - 周一 第10节</div>
+              <div class="time">2026-09-28 18:00 第3教学楼201</div>
+            </span>
+            <span class="state done">已生成</span>
+          </div>
+          <div class="body-item active">
+            <span class="idx">02</span>
+            <span class="main">
+              <div class="name">第5周 - 周一 第12节</div>
+              <div class="time">2026-10-12 18:00 第3教学楼201</div>
+            </span>
+            <span class="state">播放中</span>
+          </div>
+          <div class="body-item">
+            <span class="idx">03</span>
+            <span class="main">
+              <div class="name">第5周 - 周一 第11节</div>
+              <div class="time">2026-10-05 18:00 第3教学楼201</div>
+            </span>
+            <span class="state">生成中</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="hint">
+      <p><strong>这个页面用于验证</strong>：</p>
+      <ul>
+        <li>新版播放页（<code>#/play-center</code>）能否被识别为播放页（旧版本在 URL 无 <code>courseId</code> 时整页不注入）；</li>
+        <li>课次识别链：播放地址命名 → 页面请求记录（webRequest）→ 站点播放记录 → 课次列表选中项；</li>
+        <li>学习中心接管：切到 <code>#/home</code> 或 <code>#/list-video</code> 时应出现学习中心界面。</li>
+      </ul>
+      <p>提示：页面里没有真实站点接口时，插件会自动降级为"页面线索 + 播放器兜底"，仍应能识别出被选中的课次。</p>
+      <p>若缺失 <code>sample.mp4</code>，主画面会退化为 canvas 合成画面，仍可用于 DOM/课次识别验收。</p>
+    </div>
+
+    <script>
+      // 仅用于本地验收：更新进度条/时钟；缺失 sample.mp4 时用 canvas 流兜底。
+      (function () {
+        const primary = document.getElementById('primary');
+        const played = document.querySelector('.jy-control-progress > .played');
+        const buffered = document.querySelector('.jy-control-progress > .buffered');
+        const clock = document.getElementById('clock');
+        const DURATION = 2820;
+
+        function fmt(sec) {
+          const total = Math.max(0, Math.floor(sec || 0));
+          const m = Math.floor(total / 60);
+          const s = total % 60;
+          return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        }
+
+        function refresh() {
+          const duration = Number.isFinite(primary.duration) && primary.duration > 0 ? primary.duration : DURATION;
+          const ratio = Math.min(1, (primary.currentTime || 0) / duration);
+          if (played) played.style.width = ratio * 100 + '%';
+          if (buffered) buffered.style.width = Math.min(1, ratio + 0.15) * 100 + '%';
+          if (clock) clock.textContent = fmt(primary.currentTime) + ' / ' + fmt(duration);
+        }
+
+        function fallbackStream() {
+          const canvas = document.createElement('canvas');
+          canvas.width = 640;
+          canvas.height = 360;
+          const ctx = canvas.getContext('2d');
+          let frame = 0;
+          const tick = function () {
+            frame += 1;
+            ctx.fillStyle = '#1f2329';
+            ctx.fillRect(0, 0, 640, 360);
+            ctx.fillStyle = '#2b6cff';
+            ctx.fillRect(0, 300 + Math.sin(frame / 30) * 20, 640, 4);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '24px sans-serif';
+            ctx.fillText('play-center-sim · ' + (primary.currentTime || 0).toFixed(1) + 's', 24, 60);
+            ctx.font = '14px sans-serif';
+            ctx.fillText('无 sample.mp4 时的合成画面', 24, 90);
+            requestAnimationFrame(tick);
+          };
+          tick();
+          return canvas.captureStream(12);
+        }
+
+        primary.addEventListener('timeupdate', refresh);
+        primary.addEventListener('loadedmetadata', refresh);
+        primary.addEventListener('error', function () {
+          if (!primary.srcObject) primary.srcObject = fallbackStream();
+        });
+
+        document.getElementById('btn-toggle').addEventListener('click', function () {
+          if (primary.paused) void primary.play();
+          else primary.pause();
+        });
+        document.getElementById('btn-rate').addEventListener('click', function (event) {
+          const rates = [1, 1.25, 1.5, 2, 0.5];
+          const currentIndex = rates.indexOf(primary.playbackRate);
+          primary.playbackRate = rates[(currentIndex + 1) % rates.length];
+          event.target.textContent = '倍速 ' + primary.playbackRate + '×';
+        });
+
+        document.querySelectorAll('.body-item').forEach(function (item) {
+          item.addEventListener('click', function () {
+            document.querySelectorAll('.body-item').forEach(function (node) {
+              node.classList.remove('active');
+            });
+            item.classList.add('active');
+            console.info('[play-center-sim] selected session text:', item.querySelector('.time')?.textContent);
+          });
+        });
+
+        refresh();
+      })();
+    </script>
+  </body>
+</html>
